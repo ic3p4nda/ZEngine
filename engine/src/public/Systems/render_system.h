@@ -5,6 +5,7 @@
 #include "game_object.h"
 #include "device.h"
 #include "model.h"
+#include "frame_info.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -34,9 +35,8 @@ namespace ZEngine {
         ZRenderSystem &operator=(const ZRenderSystem&) = delete;
     
         void renderGameObjects(
-            VkCommandBuffer commandBuffer, 
-            std::vector<ZGameObject>& gameObjects,
-            const ZCamera& camera);
+            FrameInfo &frameinfo, 
+            std::vector<ZGameObject>& gameObjects);
     
     private:
         void createPipelineLayout();

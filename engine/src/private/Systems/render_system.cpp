@@ -53,10 +53,10 @@ namespace ZEngine
             fragShaderPath);
     }
 
-    void ZRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ZGameObject>& gameObjects, const ZCamera& camera)
+    void ZRenderSystem::renderGameObjects(FrameInfo &frameinfo, std::vector<ZGameObject>& gameObjects)
     {
-        pipeline->bind(commandBuffer);
-        auto projectionView = camera.getProjection() * camera.getView();
+        pipeline->bind(frameinfo.commandBuffer);
+        auto projectionView = frameinfo.camera.getProjection() * frameinfo.camera.getView();
         
         for (auto& object : gameObjects)
         {     
@@ -65,14 +65,14 @@ namespace ZEngine
             push.transform = projectionView * modelMatrix;
             push.normalMatrix = object.transform.normalMatrix();
             
-            vkCmdPushConstants(commandBuffer, 
+            vkCmdPushConstants(frameinfo.commandBuffer, 
                pipelineLayout,
                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                0,
                sizeof(SimplePushConstantData),
                &push);
-            object.model->bind(commandBuffer);
-            object.model->draw(commandBuffer);
+            object.model->bind(frameinfo.commandBuffer);
+            object.model->draw(frameinfo.commandBuffer);
         }
     }
 }

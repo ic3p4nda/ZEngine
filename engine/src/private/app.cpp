@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "keyboard_movement_controller.h"
+#include "buffer.h"
 
 #include <imgui.h>
 
@@ -12,6 +13,12 @@
 
 namespace ZEngine
 {
+    struct GlobalUbo
+    {
+        glm::mat4 projectionView{1.0f};
+        glm::vec3 lightDirection = glm::vec3(1.0f, -3.0f, -1.0f);
+    };
+    
     ZApp::ZApp()
     {
         LoadGameObjects();
@@ -21,6 +28,18 @@ namespace ZEngine
 
     void ZApp::run()
     {
+        std::vector<std::unique_ptr<ZBuffer>> uboBuffers(ZSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < uboBuffers.size(); i++)
+        {
+            uboBuffers[i] = std::make_unique<ZBuffer>(
+                Device,
+                    sizeof(GlobalUbo),
+                    1,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            uboBuffers[i]->map();
+        }
+        
         std::cout << "MaxPushConstantSize = " << Device.properties.limits.maxPushConstantsSize << "\n";
         
         ZRenderSystem simpleRenderSystem{Device, Renderer.getSwapchainRenderPass()};
@@ -45,24 +64,45 @@ namespace ZEngine
             
             cameraController.moveInPlaneXZ(Window, frameTime, viewerObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
-            
             float aspect = Renderer.getAspectRatio();
             
             camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.0f);
             
             if (auto commandBuffer = Renderer.beginFrame())
             {
-                Renderer.beginSwapchainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+                int frameIndex = Renderer.getFrameIndex();
+                FrameInfo frameInfo{
+                frameIndex,
+                frameTime,
+                commandBuffer,
+                camera
+                };
                 
-                glm::vec3 clear_color;
+                // Update
+                GlobalUbo ubo{};
+                ubo.projectionView = camera.getProjection() * camera.getView();
+                uboBuffers[frameIndex]->writeToBuffer(&ubo);
+                // uboBuffers[frameIndex]->flush();
+                
+                //Render
+                Renderer.beginSwapchainRenderPass(commandBuffer);
+                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
                 
                 // ImGui
                 ImguiLayer.newFrame();
                 ImGui::Begin("Stats");
                 ImGui::Text("FrameTime = %f", frameTime);
-                ImGui::ColorEdit3("clear color", (float*)&clear_color);
-                ImGui::
+                ImGui::DragFloat("Mouse Sensitivity: ", &cameraController.mouseSensitivity, 0.01f);
+                for (size_t i = 0; i < gameObjects.size(); i++) {
+                    ImGui::PushID((int)i);
+                    ImGui::Text("Object %zu", i);
+                    ImGui::DragFloat3("Position", &gameObjects[i].transform.translation.x, 0.005f);
+                    glm::vec3 rotationDegrees = glm::degrees(gameObjects[i].transform.rotation);
+                    if (ImGui::DragFloat3("Rotation", &rotationDegrees.x, 1.0f)) {
+                        gameObjects[i].transform.rotation = glm::radians(rotationDegrees);
+                    }
+                    ImGui::PopID();
+                }
                 ImGui::End();
                 ImguiLayer.render(commandBuffer);
                 
@@ -76,13 +116,19 @@ namespace ZEngine
 
     void ZApp::LoadGameObjects()
     {
-        std::shared_ptr<ZModel> model = 
-            ZModel::createModelFromFile(Device, "C:/_dev/engine/models/flat_vase.obj");
-        
-        auto gameObj = ZGameObject::createGameObject();
-        gameObj.model = model;
-        gameObj.transform.translation = {0.0f, 0.5f, 2.5f};
-        gameObj.transform.scale = glm::vec3(1.5f);
-        gameObjects.push_back(std::move(gameObj));
+        std::shared_ptr<ZModel> lveModel =
+        ZModel::createModelFromFile(Device, "C:/_dev/engine/models/flat_vase.obj");
+        auto flatVase = ZGameObject::createGameObject();
+        flatVase.model = lveModel;
+        flatVase.transform.translation = {-.5f, .5f, 0.f};
+        flatVase.transform.scale = glm::vec3(2.5f);
+        gameObjects.push_back(std::move(flatVase));
+
+        lveModel = ZModel::createModelFromFile(Device, "C:/_dev/engine/models/smooth_vase.obj");
+        auto smoothVase = ZGameObject::createGameObject();
+        smoothVase.model = lveModel;
+        smoothVase.transform.translation = {.5f, .5f, 0.f};
+        smoothVase.transform.scale = glm::vec3(2.5f);
+        gameObjects.push_back(std::move(smoothVase));
     }
 }

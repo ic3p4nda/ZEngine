@@ -27,10 +27,13 @@ namespace ZEngine
         
         void moveInPlaneXZ(ZWindow& window, float deltaTime, ZGameObject& gameObject);
         
-        // void HandleMouseInput(ZWindow& window, float xpos, float ypos, glm::vec3& rotate);
-        
         KeyMappings keys{};
         float moveSpeed = 3.0f;
-        float lookSpeed = 1.5f;
+        float mouseSensitivity = 3.0f;
+        
+    private:
+        bool isLooking = false;
+        double lastMouseX = 0.0;
+        double lastMouseY = 0.0;
     };
 }

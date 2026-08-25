@@ -1,16 +1,17 @@
 ﻿#include "keyboard_movement_controller.h"
 
+#include <imgui.h>
 #include <iostream>
 
 namespace ZEngine
 {
     ZKeyboardMovementController::ZKeyboardMovementController(GLFWwindow* window)
     {
-        if (glfwRawMouseMotionSupported())
-        {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_FALSE);
-            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-        }
+        // if (glfwRawMouseMotionSupported())
+        // {
+        // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //     glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        // }
     }
 
     void ZKeyboardMovementController::moveInPlaneXZ(ZWindow& window, float deltaTime, ZGameObject& gameObject)
@@ -25,10 +26,34 @@ namespace ZEngine
         if (glfwGetKey(glfwWindow, keys.lookUp) == GLFW_PRESS) rotate.x += 1.0f;
         if (glfwGetKey(glfwWindow, keys.lookDown) == GLFW_PRESS) rotate.x -= 1.0f;
         
-        // HandleMouseInput(window, xpos, ypos, rotate);
+        bool rmbHeld = glfwGetMouseButton(glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+
+        if (rmbHeld && !ImGui::GetIO().WantCaptureMouse) {
+            double xpos, ypos;
+            glfwGetCursorPos(glfwWindow, &xpos, &ypos);
+
+            if (!isLooking) {
+                glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                lastMouseX = xpos;
+                lastMouseY = ypos;
+                isLooking = true;
+            }
+
+            double deltaX = xpos - lastMouseX;
+            double deltaY = ypos - lastMouseY;
+            lastMouseX = xpos;
+            lastMouseY = ypos;
+
+            rotate.y += static_cast<float>(deltaX) * mouseSensitivity;
+            rotate.x -= static_cast<float>(deltaY) * mouseSensitivity;
+        } else if (isLooking) {
+            // just released RMB — give cursor back
+            glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            isLooking = false;
+        }
         
         if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()){
-            gameObject.transform.rotation += lookSpeed * deltaTime * glm::normalize(rotate);
+            gameObject.transform.rotation += mouseSensitivity * deltaTime * glm::normalize(rotate);
         }
         
         gameObject.transform.rotation.x = glm::clamp(gameObject.transform.rotation.x, -1.5f, 1.5f);
@@ -48,27 +73,9 @@ namespace ZEngine
         if (glfwGetKey(glfwWindow, keys.moveDown) == GLFW_PRESS) moveDir -= upDir;
         
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()){
-            gameObject.transform.translation += lookSpeed * deltaTime * glm::normalize(moveDir);
+            gameObject.transform.translation += moveSpeed * deltaTime * glm::normalize(moveDir);
         }
         
         glfwSetCursorPos(glfwWindow, xpos, ypos);
     }
-    
-    // void ZKeyboardMovementController::HandleMouseInput(ZWindow& window, float xpos, float ypos, glm::vec3& rotate)
-    // {
-    //     glm::vec2 windowExtent = window.getWindowExtent();
-    //     float centerX = windowExtent.x / 2;
-    //     float centerY = windowExtent.y / 2;
-    //     
-    //     // Look Right
-    //     if (xpos > centerX) rotate.y += 0.1f;
-    //     // Look Left
-    //     if (xpos < centerX ) rotate.y -= 0.1f;
-    //     // Look down
-    //     if (ypos < centerY) rotate.x += 0.1f;
-    //     // Look Up
-    //     if (ypos  > centerY) rotate.x -= 0.1f;
-    //     
-    //     glfwSetCursorPos(window.getGLFWwindow(), centerX, centerY);
-    // }
 }

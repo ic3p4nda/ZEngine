@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "device.h"
+#include "buffer.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -53,13 +54,11 @@ namespace ZEngine
         
         ZDevice& device;
         
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
+        std::unique_ptr<ZBuffer> vertexBuffer;
         uint32_t vertexCount;
         
         bool hasIndexBuffer = false;
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
+        std::unique_ptr<ZBuffer> indexBuffer;
         uint32_t indexCount;
     };
 }
