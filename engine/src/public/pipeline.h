@@ -1,0 +1,59 @@
+﻿#pragma once
+
+#include "device.h"
+
+#include <string>
+#include <vector>
+
+namespace ZEngine
+{
+    struct PipelineConfigInfo
+    {
+        PipelineConfigInfo(const PipelineConfigInfo &) = delete;
+        PipelineConfigInfo& operator=(const PipelineConfigInfo &) = delete;
+        
+        VkPipelineViewportStateCreateInfo viewportInfo;
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+        VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+        VkPipelineMultisampleStateCreateInfo multisampleInfo;
+        VkPipelineColorBlendAttachmentState colorBlendAttachment;
+        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
+        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+        std::vector<VkDynamicState> dynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
+        VkPipelineLayout pipelineLayout = nullptr;
+        VkRenderPass renderPass = nullptr;
+        uint32_t subpass = 0;
+    };
+    
+    class ZPipeline
+    {
+    public:
+        ZPipeline(ZDevice &device, 
+            const PipelineConfigInfo &configInfo,
+            const std::string& vertFilepath, 
+            const std::string& fragFilepath);
+        
+        ~ZPipeline();
+        
+        ZPipeline(const ZPipeline &) = delete;
+        ZPipeline& operator=(const ZPipeline &) = delete;
+        
+        void bind(VkCommandBuffer commandBuffer);
+        static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
+        
+    private:
+        static std::vector<char> readFile(const std::string& filepath);
+        
+        void createGraphicsPipeline(const std::string& vertFilepath, 
+            const std::string& fragFilepath,
+            const PipelineConfigInfo &configInfo);
+        
+        void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
+        
+        ZDevice& device;
+        VkPipeline graphicsPipeline;
+        VkShaderModule vertShaderModule;
+        VkShaderModule fragShaderModule;
+    };
+}
