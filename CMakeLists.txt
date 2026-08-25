@@ -73,41 +73,32 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
-if (WIN32)
-    message(STATUS "CREATING BUILD FOR WINDOWS")
+message(STATUS "CREATING BUILD FOR WINDOWS")
 
-    if (USE_MINGW)
-        target_include_directories(${PROJECT_NAME} PUBLIC
-                ${MINGW_PATH}/include
-        )
-        target_link_directories(${PROJECT_NAME} PUBLIC
-                ${MINGW_PATH}/lib
-        )
-    endif()
-
+if (USE_MINGW)
     target_include_directories(${PROJECT_NAME} PUBLIC
-            ${PROJECT_SOURCE_DIR}/ZEngine/src/
-            ${Vulkan_INCLUDE_DIRS}
-            ${TINYOBJ_PATH}
-            ${GLFW_INCLUDE_DIRS}
-            ${GLM_PATH}
-            ${IMGUI_PATH}
+            ${MINGW_PATH}/include
     )
-
     target_link_directories(${PROJECT_NAME} PUBLIC
-            ${Vulkan_LIBRARIES}
-            ${GLFW_LIB}
+            ${MINGW_PATH}/lib
     )
-
-    target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
-elseif (UNIX)
-    message(STATUS "CREATING BUILD FOR UNIX")
-    target_include_directories(${PROJECT_NAME} PUBLIC
-            ${PROJECT_SOURCE_DIR}/src
-            ${TINYOBJ_PATH}
-    )
-    target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 endif()
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${PROJECT_SOURCE_DIR}/ZEngine/src/
+    ${Vulkan_INCLUDE_DIRS}
+    ${TINYOBJ_PATH}
+    ${GLFW_INCLUDE_DIRS}
+    ${GLM_PATH}
+    ${IMGUI_PATH}
+)
+
+target_link_directories(${PROJECT_NAME} PUBLIC 
+        ${Vulkan_LIBRARIES} 
+        ${GLFW_LIB}
+)
+
+target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
 
 find_program(GLSL_COMPILER glslc HINTS
         ${VULKAN_SDK_PATH}/Bin
