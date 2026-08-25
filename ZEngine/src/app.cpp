@@ -117,14 +117,14 @@ namespace ZEngine
     void ZApp::LoadGameObjects()
     {
         std::shared_ptr<ZModel> lveModel =
-        ZModel::createModelFromFile(Device, "C:/_dev/engine/models/flat_vase.obj");
+        ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/flat_vase.obj");
         auto flatVase = ZGameObject::createGameObject();
         flatVase.model = lveModel;
         flatVase.transform.translation = {-.5f, .5f, 0.f};
         flatVase.transform.scale = glm::vec3(2.5f);
         gameObjects.push_back(std::move(flatVase));
 
-        lveModel = ZModel::createModelFromFile(Device, "C:/_dev/engine/models/smooth_vase.obj");
+        lveModel = ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/smooth_vase.obj");
         auto smoothVase = ZGameObject::createGameObject();
         smoothVase.model = lveModel;
         smoothVase.transform.translation = {.5f, .5f, 0.f};

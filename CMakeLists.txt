@@ -58,12 +58,12 @@ if (NOT TINYOBJ_PATH)
     set(TINYOBJ_PATH external/tinyobjloader)
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/engine/src/private/*.cpp)
-file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/engine/src/public/*.h)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp)
+file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
 file(GLOB_RECURSE LIBRARIES ${IMGUI_PATH}/*.cpp)
 
 add_executable(${PROJECT_NAME}
-        ${PROJECT_SOURCE_DIR}/engine/main.cpp
+        ${PROJECT_SOURCE_DIR}/ZEngine/main.cpp
         ${SOURCES}
         ${HEADERS}
         ${LIBRARIES}
@@ -86,7 +86,7 @@ if (WIN32)
     endif()
 
     target_include_directories(${PROJECT_NAME} PUBLIC
-            ${PROJECT_SOURCE_DIR}/engine/src/public
+            ${PROJECT_SOURCE_DIR}/ZEngine/src/
             ${Vulkan_INCLUDE_DIRS}
             ${TINYOBJ_PATH}
             ${GLFW_INCLUDE_DIRS}
@@ -123,17 +123,17 @@ if(NOT GLSL_COMPILER)
 endif()
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
-        "${PROJECT_SOURCE_DIR}/engine/shaders/*.frag"
-        "${PROJECT_SOURCE_DIR}/engine/shaders/*.vert"
+        "${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag"
+        "${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.vert"
 )
 
 set(SPIRV_BINARY_FILES "")
 
-file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/engine/shaders")
+file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/ZEngine/shaders")
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)
-    set(SPIRV "${PROJECT_SOURCE_DIR}/engine/shaders/${FILE_NAME}.spv")
+    set(SPIRV "${PROJECT_SOURCE_DIR}/ZEngine/shaders/${FILE_NAME}.spv")
 
     add_custom_command(
             OUTPUT ${SPIRV}

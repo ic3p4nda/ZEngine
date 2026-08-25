@@ -16,8 +16,8 @@
 #include <vector>
 
 namespace ZEngine {
-    const std::string vertexShaderPath = "C:/_dev/engine/shaders/shader.vert.spv";
-    const std::string fragShaderPath = "C:/_dev/engine/shaders/shader.frag.spv";
+    const std::string vertexShaderPath = "C:/_dev/ZEngine/shaders/shader.vert.spv";
+    const std::string fragShaderPath = "C:/_dev/ZEngine/shaders/shader.frag.spv";
     
     struct SimplePushConstantData
     {

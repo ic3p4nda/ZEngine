@@ -4,7 +4,7 @@
 #include "game_object.h"
 #include "device.h"
 #include "renderer.h"
-#include "imgui_layer.h"
+#include "ImGui/imgui_layer.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
