@@ -58,14 +58,14 @@ if (NOT TINYOBJ_PATH)
     set(TINYOBJ_PATH external/tinyobjloader)
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp)
-file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp && ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
+file(GLOB_RECURSE SHADERS ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag && ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.vert)
 file(GLOB_RECURSE LIBRARIES ${IMGUI_PATH}/*.cpp)
 
 add_executable(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/ZEngine/main.cpp
         ${SOURCES}
-        ${HEADERS}
+        ${SHADERS}
         ${LIBRARIES}
 )
 

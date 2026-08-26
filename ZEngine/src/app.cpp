@@ -3,6 +3,8 @@
 #include "camera.h"
 #include "keyboard_movement_controller.h"
 #include "buffer.h"
+#include "Systems/render_system.h"
+#include "Systems/point_light_system.h"
 
 #include <imgui.h>
 
@@ -13,14 +15,15 @@
 
 namespace ZEngine
 {
-    struct GlobalUbo
-    {
-        glm::mat4 projectionView{1.0f};
-        glm::vec3 lightDirection = glm::vec3(1.0f, -3.0f, -1.0f);
-    };
+    
     
     ZApp::ZApp()
     {
+        globalPool = ZDescriptorPool::Builder(Device)
+            .setMaxSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ZSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .build();
+        
         LoadGameObjects();
     }
 
@@ -40,13 +43,34 @@ namespace ZEngine
             uboBuffers[i]->map();
         }
         
+        auto globalSetLayout = ZDescriptorSetLayout::Builder(Device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+        
+        std::vector<VkDescriptorSet> globalDescriptorSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); i++)
+        {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            ZDescriptorWriter(*globalSetLayout, *globalPool)
+            .writeBuffer(0, &bufferInfo)
+            .build(globalDescriptorSets[i]);
+        }
+        
         std::cout << "MaxPushConstantSize = " << Device.properties.limits.maxPushConstantsSize << "\n";
         
-        ZRenderSystem simpleRenderSystem{Device, Renderer.getSwapchainRenderPass()};
+        ZRenderSystem simpleRenderSystem{Device,
+            Renderer.getSwapchainRenderPass(),
+            globalSetLayout->getDescriptorSetLayout()
+        };
+        ZPointLightSystem pointLightSystem{Device,
+            Renderer.getSwapchainRenderPass(),
+            globalSetLayout->getDescriptorSetLayout()
+        };
         ZCamera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, -2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
         
         auto viewerObject = ZGameObject::createGameObject();
+        viewerObject.transform.translation.z = -2.5f;
         ZKeyboardMovementController cameraController{Window.getGLFWwindow()};
         
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -75,34 +99,29 @@ namespace ZEngine
                 frameIndex,
                 frameTime,
                 commandBuffer,
-                camera
+                camera,
+                    globalDescriptorSets[frameIndex],
+                    gameObjects
                 };
                 
                 // Update
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjection() * camera.getView();
+                ubo.projection = camera.getProjection();
+                ubo.view = camera.getView();
+                pointLightSystem.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 // uboBuffers[frameIndex]->flush();
                 
                 //Render
                 Renderer.beginSwapchainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
+                simpleRenderSystem.render(frameInfo);
+                pointLightSystem.render(frameInfo);
                 
                 // ImGui
                 ImguiLayer.newFrame();
                 ImGui::Begin("Stats");
                 ImGui::Text("FrameTime = %f", frameTime);
-                ImGui::DragFloat("Mouse Sensitivity: ", &cameraController.mouseSensitivity, 0.01f);
-                for (size_t i = 0; i < gameObjects.size(); i++) {
-                    ImGui::PushID((int)i);
-                    ImGui::Text("Object %zu", i);
-                    ImGui::DragFloat3("Position", &gameObjects[i].transform.translation.x, 0.005f);
-                    glm::vec3 rotationDegrees = glm::degrees(gameObjects[i].transform.rotation);
-                    if (ImGui::DragFloat3("Rotation", &rotationDegrees.x, 1.0f)) {
-                        gameObjects[i].transform.rotation = glm::radians(rotationDegrees);
-                    }
-                    ImGui::PopID();
-                }
+                ImGui::DragFloat("Sens", &cameraController.mouseSensitivity, 0.01f);
                 ImGui::End();
                 ImguiLayer.render(commandBuffer);
                 
@@ -122,13 +141,40 @@ namespace ZEngine
         flatVase.model = lveModel;
         flatVase.transform.translation = {-.5f, .5f, 0.f};
         flatVase.transform.scale = glm::vec3(2.5f);
-        gameObjects.push_back(std::move(flatVase));
+        gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
         lveModel = ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/smooth_vase.obj");
         auto smoothVase = ZGameObject::createGameObject();
         smoothVase.model = lveModel;
         smoothVase.transform.translation = {.5f, .5f, 0.f};
         smoothVase.transform.scale = glm::vec3(2.5f);
-        gameObjects.push_back(std::move(smoothVase));
+        gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+        
+        lveModel = ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/quad.obj");
+        auto floor = ZGameObject::createGameObject();
+        floor.model = lveModel;
+        floor.transform.translation = {0.0f, .5f, 0.f};
+        floor.transform.scale = glm::vec3(3.0f);
+        gameObjects.emplace(floor.getId(), std::move(floor));
+        
+        std::vector<glm::vec3> lightColors{
+          {1.f, .1f, .1f},
+          {.1f, .1f, 1.f},
+          {.1f, 1.f, .1f},
+          {1.f, 1.f, .1f},
+          {.1f, 1.f, 1.f},
+          {1.f, 1.f, 1.f}  //
+        };
+        
+        for (int i = 0; i < lightColors.size(); i++)
+        {
+            auto pointLight = ZGameObject::makePointLight(0.5f);
+            pointLight.color = lightColors[i];
+            auto rotateLight = glm::rotate(glm::mat4(1.0f),
+                (i * glm::two_pi<float>() ) / lightColors.size(),
+                {0.0f, -1.0f, 0.0f});
+            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f));
+            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        }
     }
 }

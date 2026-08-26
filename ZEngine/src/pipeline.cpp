@@ -97,6 +97,9 @@ namespace ZEngine
         configInfo.dynamicStateInfo.dynamicStateCount =
         static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
         configInfo.dynamicStateInfo.flags = 0;
+        
+        configInfo.bindingDescriptions = ZModel::Vertex::getBindingDescriptions();
+        configInfo.attributeDescriptions = ZModel::Vertex::getAttributeDescriptions();
     }
 
     std::vector<char> ZPipeline::readFile(const std::string& filepath)
@@ -154,8 +157,8 @@ namespace ZEngine
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
         
-        auto bindingDescriptions = ZModel::Vertex::getBindingDescriptions();
-        auto attributeDescriptions = ZModel::Vertex::getAttributeDescriptions();
+        auto& bindingDescriptions = configInfo.bindingDescriptions;
+        auto& attributeDescriptions = configInfo.attributeDescriptions;
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());

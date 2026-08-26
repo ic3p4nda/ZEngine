@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <memory>
+#include <unordered_map>
 
 namespace ZEngine
 {
@@ -19,24 +20,36 @@ namespace ZEngine
         glm::mat3 normalMatrix();
     };
     
+    struct PointLightComponent
+    {
+        float lightIntensity = 1.0f;
+    };
+    
     class ZGameObject
     {
     public:
         using id_t = unsigned int;
+        using MAP = std::unordered_map<id_t, ZGameObject>;
         
         static ZGameObject createGameObject();
         
-        // GameObject(const GameObject &) = delete;
-        // GameObject &operator=(const GameObject &) = delete;
-        // GameObject(GameObject &&) = default;
-        // GameObject &operator=(GameObject &&) = default;
+        static ZGameObject makePointLight(
+            float lightIntensity = 5.0f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.0f));
         
-        id_t getId() { return id; };
+        ZGameObject(const ZGameObject &) = delete;
+        ZGameObject &operator=(const ZGameObject &) = delete;
+        ZGameObject(ZGameObject &&) = default;
+        ZGameObject &operator=(ZGameObject &&) = default;
         
-        std::shared_ptr<ZModel> model{};
+        id_t getId() { return id; }
+        
         glm::vec3 color{};
         TransformComponent transform{};
-        
+    
+        // Optional poiters
+        std::shared_ptr<ZModel> model{};
+        std::unique_ptr<PointLightComponent> pointLight = nullptr;
+    
         private:
         ZGameObject(id_t objId) : id(objId) {};
         

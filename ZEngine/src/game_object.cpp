@@ -78,4 +78,14 @@ namespace ZEngine
         static id_t currentId = 0;
         return ZGameObject{ currentId++ };
     }
+
+    ZGameObject ZGameObject::makePointLight(float lightIntensity, float radius, glm::vec3 color)
+    {
+        ZGameObject obj = createGameObject();
+        obj.color = color;
+        obj.transform.scale.x = radius;
+        obj.pointLight = std::make_unique<PointLightComponent>();
+        obj.pointLight->lightIntensity = lightIntensity;
+        return obj;
+    }
 }

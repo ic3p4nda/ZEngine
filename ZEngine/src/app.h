@@ -4,6 +4,7 @@
 #include "game_object.h"
 #include "device.h"
 #include "renderer.h"
+#include "descriptors.h"
 #include "ImGui/imgui_layer.h"
 
 #define GLM_FORCE_RADIANS
@@ -14,7 +15,6 @@
 #include <memory>
 #include <vector>
 
-#include "Systems/render_system.h"
 
 #define MAX_FRAME_TIME 0.5f
 
@@ -41,7 +41,8 @@ namespace ZEngine {
         ZRenderer Renderer{Window, Device};
         ZImguiLayer ImguiLayer{Device, Renderer.getSwapchainRenderPass(), Window.getGLFWwindow()};
         
-        std::vector<ZGameObject> gameObjects;
+        std::unique_ptr<ZDescriptorPool> globalPool{};
+        ZGameObject::MAP gameObjects;
     };
     
 }

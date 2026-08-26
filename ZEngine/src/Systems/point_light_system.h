@@ -16,27 +16,22 @@
 #include <vector>
 
 namespace ZEngine {
-    
-    struct SimplePushConstantData
-    {
-        glm::mat4 modelMatrix {1.0f};
-        glm::mat4 normalMatrix {1.0f};
-    };
-    
-    class ZRenderSystem
+    class ZPointLightSystem
     {
     public:
-        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-        ~ZRenderSystem();
+        ZPointLightSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+        ~ZPointLightSystem();
         
-        ZRenderSystem(const ZRenderSystem&) = delete;
-        ZRenderSystem &operator=(const ZRenderSystem&) = delete;
+        ZPointLightSystem(const ZPointLightSystem&) = delete;
+        ZPointLightSystem &operator=(const ZPointLightSystem&) = delete;
     
+        void update(FrameInfo& frameInfo, GlobalUbo& ubo);
+        
         void render(FrameInfo &frameinfo);
     
     private:
-        const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/shader.vert.spv";
-        const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/shader.frag.spv";
+        const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.vert.spv";
+        const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.frag.spv";
         
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);

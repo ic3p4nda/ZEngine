@@ -8,9 +8,9 @@
 
 namespace ZEngine
 {
-    ZRenderSystem::ZRenderSystem(class ZDevice& device, VkRenderPass renderpass) : Device(device)
+    ZRenderSystem::ZRenderSystem(class ZDevice& device, VkRenderPass renderpass, VkDescriptorSetLayout globalSetLayout) : Device(device)
     {
-        createPipelineLayout();
+        createPipelineLayout(globalSetLayout);
         createPipeline(renderpass);
     }
 
@@ -19,17 +19,19 @@ namespace ZEngine
         vkDestroyPipelineLayout(Device.device(), pipelineLayout, nullptr);
     }
     
-    void ZRenderSystem::createPipelineLayout()
+    void ZRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
     {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
         
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+        
         VkPipelineLayoutCreateInfo layoutCreateInfo {};
         layoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        layoutCreateInfo.setLayoutCount = 0;
-        layoutCreateInfo.pSetLayouts = nullptr;
+        layoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+        layoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
         layoutCreateInfo.pushConstantRangeCount = 1;
         layoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         
@@ -49,20 +51,29 @@ namespace ZEngine
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<ZPipeline>(Device,
             pipelineConfig,
-            vertexShaderPath,
-            fragShaderPath);
+            VERTEXSHADERPATH,
+            FRAGSHADERPATH);
     }
 
-    void ZRenderSystem::renderGameObjects(FrameInfo &frameinfo, std::vector<ZGameObject>& gameObjects)
+    void ZRenderSystem::render(FrameInfo &frameinfo)
     {
         pipeline->bind(frameinfo.commandBuffer);
-        auto projectionView = frameinfo.camera.getProjection() * frameinfo.camera.getView();
         
-        for (auto& object : gameObjects)
+        vkCmdBindDescriptorSets(
+            frameinfo.commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0, 1,
+            &frameinfo.globalDescriptorSet,
+            0, nullptr
+            );
+        
+        for (auto& kv : frameinfo.gameObjects)
         {     
+            auto& object = kv.second;
+            if (object.model == nullptr) continue;
             SimplePushConstantData push{};
-            auto modelMatrix = object.transform.mat4();
-            push.transform = projectionView * modelMatrix;
+            push.modelMatrix = object.transform.mat4();
             push.normalMatrix = object.transform.normalMatrix();
             
             vkCmdPushConstants(frameinfo.commandBuffer, 
