@@ -75,8 +75,6 @@ namespace ZEngine
         
         auto currentTime = std::chrono::high_resolution_clock::now();
         
-        ImGui::CreateContext();
-        
         while (!Window.shouldClose()){
             glfwPollEvents();
             
@@ -137,7 +135,7 @@ namespace ZEngine
     void ZApp::LoadGameObjects()
     {
         std::shared_ptr<ZModel> lveModel =
-        ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/flat_vase.obj");
+        ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/smooth_vase.obj");
         auto flatVase = ZGameObject::createGameObject();
         flatVase.model = lveModel;
         flatVase.transform.translation = {-.5f, .5f, 0.f};

@@ -191,4 +191,4 @@ VkResult ZBuffer::invalidateIndex(int index) {
   return invalidate(alignmentSize, index * alignmentSize);
 }
  
-}  // namespace lve
+}
