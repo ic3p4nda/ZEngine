@@ -52,14 +52,19 @@ else()
 endif()
 
 include_directories(external)
-
+    
 if (NOT TINYOBJ_PATH)
     message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
     set(TINYOBJ_PATH external/tinyobjloader)
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp && ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
-file(GLOB_RECURSE SHADERS ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag && ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.vert)
+if (NOT STBIMAGE_PATH)
+    message(STATUS "STBIMAGE_PATH not specified in .env.cmake, using external/stb_image")
+    set(STBIMAGE_PATH external/stb_image)
+endif()
+
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
+file(GLOB_RECURSE SHADERS ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.vert)
 file(GLOB_RECURSE LIBRARIES ${IMGUI_PATH}/*.cpp)
 
 add_executable(${PROJECT_NAME}
@@ -89,8 +94,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_INCLUDE_DIRS}
     ${TINYOBJ_PATH}
     ${GLFW_INCLUDE_DIRS}
-    ${GLM_PATH}
-    ${IMGUI_PATH}
+    ${GLM_PATH} 
+        ${STBIMAGE_PATH}
+        ${IMGUI_PATH}
 )
 
 target_link_directories(${PROJECT_NAME} PUBLIC 

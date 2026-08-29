@@ -1,5 +1,4 @@
 ﻿.idea
 CMakeLists.txt.DotSettings.user
 cmake-build-debug
-engine/shaders/shader.frag.spv
-engine/shaders/shader.vert.spv
+*.spv

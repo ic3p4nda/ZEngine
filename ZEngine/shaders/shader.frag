@@ -3,6 +3,9 @@
 layout (location = 0) in vec3 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
 layout (location = 2) in vec3 fragNormalWorld;
+layout (location = 3) in vec2 fragUv;
+
+layout(set = 1, binding = 0) uniform sampler2D texSampler;
 
 layout (location = 0) out vec4 outColor;
 
@@ -52,5 +55,6 @@ void main() {
         specularLight += intensity * blinnTerm;
     }
 
-    outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
+    vec3 texColor = texture(texSampler, fragUv).rgb;
+    outColor = vec4(diffuseLight * texColor + specularLight * fragColor, 1.0);
 }

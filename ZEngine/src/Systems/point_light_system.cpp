@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 
 #include "app.h"
@@ -54,6 +55,7 @@ namespace ZEngine
         
         PipelineConfigInfo pipelineConfig{};
         ZPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        ZPipeline::enableAlphaBlending(pipelineConfig);
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.bindingDescriptions.clear();
         pipelineConfig.renderPass = renderpass;
@@ -90,6 +92,17 @@ namespace ZEngine
 
     void ZPointLightSystem::render(FrameInfo &frameinfo)
     {
+        std::map<float, ZGameObject::id_t> sorted;
+        for (auto& kv : frameinfo.gameObjects)
+        {
+            auto& obj = kv.second;
+            if (obj.pointLight == nullptr) continue;
+            
+            auto offset = frameinfo.camera.getPosition() - obj.transform.translation;
+            float disSquared = glm::dot(offset, offset);
+            sorted[disSquared] = obj.getId();
+        }
+        
         pipeline->bind(frameinfo.commandBuffer);
         
         vkCmdBindDescriptorSets(
@@ -101,10 +114,9 @@ namespace ZEngine
             0, nullptr
             );
      
-        for (auto& kv : frameinfo.gameObjects)
+        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
-            auto& obj = kv.second;
-            if (obj.pointLight == nullptr) continue;
+            auto& obj = frameinfo.gameObjects.at(it->second);
             
             PointLightPushConstants pushConstant{};
             pushConstant.position = glm::vec4(obj.transform.translation, 1.0f);

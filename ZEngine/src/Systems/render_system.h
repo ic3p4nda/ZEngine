@@ -26,19 +26,19 @@ namespace ZEngine {
     class ZRenderSystem
     {
     public:
-        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout);
         ~ZRenderSystem();
         
         ZRenderSystem(const ZRenderSystem&) = delete;
         ZRenderSystem &operator=(const ZRenderSystem&) = delete;
     
-        void render(FrameInfo &frameinfo);
+        void render(FrameInfo &frameinfo, VkDescriptorSet textureDescriptorSet);
     
     private:
         const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/shader.vert.spv";
         const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/shader.frag.spv";
         
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout);
         void createPipeline(VkRenderPass renderPass);
         
         ZDevice& Device;

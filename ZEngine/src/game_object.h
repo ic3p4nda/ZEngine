@@ -7,6 +7,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "texture.h"
+
 namespace ZEngine
 {
     
@@ -46,8 +48,9 @@ namespace ZEngine
         glm::vec3 color{};
         TransformComponent transform{};
     
-        // Optional poiters
+        // Optional pointers
         std::shared_ptr<ZModel> model{};
+        std::shared_ptr<ZTexture> texture{};
         std::unique_ptr<PointLightComponent> pointLight = nullptr;
     
         private:

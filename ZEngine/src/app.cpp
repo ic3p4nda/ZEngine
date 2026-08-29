@@ -15,13 +15,12 @@
 
 namespace ZEngine
 {
-    
-    
     ZApp::ZApp()
     {
         globalPool = ZDescriptorPool::Builder(Device)
-            .setMaxSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .setMaxSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT + 1)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ZSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)   
             .build();
         
         LoadGameObjects();
@@ -47,6 +46,18 @@ namespace ZEngine
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
         
+        auto textureSetLayout = ZDescriptorSetLayout::Builder(Device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+        
+        auto brickTexture = std::make_shared<ZTexture>(Device, "C:/_dev/ZEngine/models/brick.jpg");
+        
+        VkDescriptorSet floorTextureDescriptorSet;
+        auto imageInfo = brickTexture->descriptorInfo();
+        ZDescriptorWriter(*textureSetLayout, *globalPool)
+        .writeImage(0, &imageInfo)
+        .build(floorTextureDescriptorSet);
+        
         std::vector<VkDescriptorSet> globalDescriptorSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); i++)
         {
@@ -60,7 +71,8 @@ namespace ZEngine
         
         ZRenderSystem simpleRenderSystem{Device,
             Renderer.getSwapchainRenderPass(),
-            globalSetLayout->getDescriptorSetLayout()
+            globalSetLayout->getDescriptorSetLayout(),
+            textureSetLayout->getDescriptorSetLayout()
         };
         ZPointLightSystem pointLightSystem{Device,
             Renderer.getSwapchainRenderPass(),
@@ -75,6 +87,9 @@ namespace ZEngine
         
         auto currentTime = std::chrono::high_resolution_clock::now();
         
+        float fpsTimer = 0.0f;
+        float fps = 0.0f;
+        
         while (!Window.shouldClose()){
             glfwPollEvents();
             
@@ -88,7 +103,7 @@ namespace ZEngine
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
             float aspect = Renderer.getAspectRatio();
             
-            camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.0f);
+            camera.setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 100.0f);
             
             if (auto commandBuffer = Renderer.beginFrame())
             {
@@ -113,12 +128,19 @@ namespace ZEngine
                 
                 //Render
                 Renderer.beginSwapchainRenderPass(commandBuffer);
-                simpleRenderSystem.render(frameInfo);
+                simpleRenderSystem.render(frameInfo, floorTextureDescriptorSet);
                 pointLightSystem.render(frameInfo);
+                
+                fpsTimer += frameTime;
+                if (fpsTimer >= 0.2f) {
+                    fps = 1000 / frameTime;
+                    fpsTimer = 0.0f;
+                }
                 
                 // ImGui
                 ImguiLayer.newFrame();
                 ImGui::Begin("Stats");
+                ImGui::Text("FPS = %f", fps);
                 ImGui::Text("FrameTime = %f", frameTime);
                 ImGui::DragFloat("Sens", &cameraController.mouseSensitivity, 0.01f);
                 ImGui::End();
@@ -135,11 +157,11 @@ namespace ZEngine
     void ZApp::LoadGameObjects()
     {
         std::shared_ptr<ZModel> lveModel =
-        ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/smooth_vase.obj");
+        ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/FinalBaseMesh.obj");
         auto flatVase = ZGameObject::createGameObject();
         flatVase.model = lveModel;
         flatVase.transform.translation = {-.5f, .5f, 0.f};
-        flatVase.transform.scale = glm::vec3(2.5f);
+        flatVase.transform.scale = glm::vec3(-0.06f);
         gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
         lveModel = ZModel::createModelFromFile(Device, "C:/_dev/ZEngine/models/smooth_vase.obj");
