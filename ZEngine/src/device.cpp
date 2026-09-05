@@ -67,6 +67,9 @@ namespace z_engine
     ZDevice::~ZDevice()
     {
         vkDestroyCommandPool(device_, command_pool_, nullptr);
+        
+        vmaDestroyAllocator(allocator_);
+        
         vkDestroyDevice(device_, nullptr);
 
         if (enable_validation_layers_)
@@ -194,6 +197,17 @@ namespace z_engine
 
         vkGetDeviceQueue(device_, indices.graphics_family, 0, &graphics_queue_);
         vkGetDeviceQueue(device_, indices.present_family, 0, &present_queue_);
+    
+        VmaAllocatorCreateInfo allocator_info = {};
+        allocator_info.physicalDevice = physical_device_;
+        allocator_info.device = device_;
+        allocator_info.instance = instance_;
+        allocator_info.vulkanApiVersion = VK_API_VERSION_1_0;
+        
+        if (vmaCreateAllocator(&allocator_info, &allocator_) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create VMA allocator!");
+        }
     }
 
     void ZDevice::CreateCommandPool()
@@ -217,20 +231,20 @@ namespace z_engine
     {
         QueueFamilyIndices indices = FindQueueFamilies(device);
 
-        bool extensionsSupported = CheckDeviceExtensionSupport(device);
+        bool extensions_supported = CheckDeviceExtensionSupport(device);
 
-        bool swapChainAdequate = false;
-        if (extensionsSupported)
+        bool swap_chain_adequate = false;
+        if (extensions_supported)
         {
-            SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
-            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.present_modes.empty();
+            SwapChainSupportDetails swap_chain_support = QuerySwapChainSupport(device);
+            swap_chain_adequate = !swap_chain_support.formats.empty() && !swap_chain_support.present_modes.empty();
         }
 
-        VkPhysicalDeviceFeatures supportedFeatures;
-        vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+        VkPhysicalDeviceFeatures supported_features;
+        vkGetPhysicalDeviceFeatures(device, &supported_features);
 
-        return indices.IsComplete() && extensionsSupported && swapChainAdequate &&
-            supportedFeatures.samplerAnisotropy;
+        return indices.IsComplete() && extensions_supported && swap_chain_adequate &&
+            supported_features.samplerAnisotropy;
     }
 
     void ZDevice::PopulateDebugMessengerCreateInfo(

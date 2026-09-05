@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <vk_mem_alloc.h>
+
 namespace z_engine
 {
     struct SwapChainSupportDetails
@@ -49,6 +51,7 @@ namespace z_engine
         VkQueue GraphicsQueue() const { return graphics_queue_; }
         VkQueue PresentQueue() const { return present_queue_; }
         VkPhysicalDevice PhysicalDevice() const { return physical_device_; }
+        VmaAllocator GetAllocator() { return allocator_; }
 
         SwapChainSupportDetails GetSwapChainSupport() { return QuerySwapChainSupport(physical_device_); }
         uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
@@ -105,6 +108,7 @@ namespace z_engine
         VkSurfaceKHR surface_;
         VkQueue graphics_queue_;
         VkQueue present_queue_;
+        VmaAllocator allocator_;
 
         const std::vector<const char*> validation_layers_ = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char*> device_extensions_ = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};

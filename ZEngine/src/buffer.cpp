@@ -2,6 +2,7 @@
 
 // std
 #include <cstring>
+#include <stdexcept>
 
 namespace z_engine
 {
@@ -38,14 +39,26 @@ namespace z_engine
     {
         alignment_size_ = GetAlignment(instance_size, min_offset_alignment);
         buffer_size_ = alignment_size_ * instance_count;
-        device.CreateBuffer(buffer_size_, usage_flags, memory_property_flags, buffer_, memory_);
+        
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = buffer_size_;
+        bufferInfo.usage = usage_flags;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VmaAllocationCreateInfo allocInfo{};
+        allocInfo.requiredFlags = memory_property_flags;
+
+        if (vmaCreateBuffer(device_.GetAllocator(), &bufferInfo, &allocInfo, &buffer_, &allocation_, nullptr) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create buffer!");
+        }
     }
 
     ZBuffer::~ZBuffer()
     {
         unmap();
         vkDestroyBuffer(device_.device(), buffer_, nullptr);
-        vkFreeMemory(device_.device(), memory_, nullptr);
     }
 
     /**
@@ -59,8 +72,8 @@ namespace z_engine
      */
     VkResult ZBuffer::map(VkDeviceSize size, VkDeviceSize offset)
     {
-        assert(buffer_ && memory_ && "Called map on buffer before create");
-        return vkMapMemory(device_.device(), memory_, offset, size, 0, &mapped_);
+        assert(buffer_ && allocation_ && "Called map on buffer before create");
+        return vmaMapMemory(device_.GetAllocator(), allocation_, &mapped_);
     }
 
     /**
@@ -72,7 +85,7 @@ namespace z_engine
     {
         if (mapped_)
         {
-            vkUnmapMemory(device_.device(), memory_);
+            vmaUnmapMemory(device_.GetAllocator(), allocation_);
             mapped_ = nullptr;
         }
     }
@@ -115,12 +128,7 @@ namespace z_engine
      */
     VkResult ZBuffer::flush(VkDeviceSize size, VkDeviceSize offset) const
     {
-        VkMappedMemoryRange mapped_range = {};
-        mapped_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        mapped_range.memory = memory_;
-        mapped_range.offset = offset;
-        mapped_range.size = size;
-        return vkFlushMappedMemoryRanges(device_.device(), 1, &mapped_range);
+        return vmaFlushAllocation(device_.GetAllocator(), allocation_, offset, size);
     }
 
     /**
@@ -136,12 +144,7 @@ namespace z_engine
      */
     VkResult ZBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) const
     {
-        VkMappedMemoryRange mapped_range = {};
-        mapped_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        mapped_range.memory = memory_;
-        mapped_range.offset = offset;
-        mapped_range.size = size;
-        return vkInvalidateMappedMemoryRanges(device_.device(), 1, &mapped_range);
+        return vmaInvalidateAllocation(device_.GetAllocator(), allocation_, offset, size);
     }
 
     /**

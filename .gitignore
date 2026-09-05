@@ -2,9 +2,3 @@
 CMakeLists.txt.DotSettings.user
 cmake-build-debug
 *.spv
-
-*.html
-*.css
-docs/html/
-docs/doxygen/
-*/docs/

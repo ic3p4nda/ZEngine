@@ -47,7 +47,7 @@ namespace z_engine
         ZDevice& device_;
         void* mapped_ = nullptr;
         VkBuffer buffer_ = VK_NULL_HANDLE;
-        VkDeviceMemory memory_ = VK_NULL_HANDLE;
+        VmaAllocation allocation_ = VK_NULL_HANDLE;
 
         VkDeviceSize buffer_size_;
         uint32_t instance_count_;
