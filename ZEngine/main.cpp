@@ -6,16 +6,17 @@
 
 int main()
 {
-    ZEngine::ZApp app;
-    
+    z_engine::ZApp app;
+
     try
     {
         app.run();
-    } catch (std::exception& e)
+    }
+    catch (std::exception& e)
     {
         std::cerr << e.what() << "\n";
         return EXIT_FAILURE;
     }
-    
+
     return EXIT_SUCCESS;
 }

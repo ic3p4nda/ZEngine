@@ -15,36 +15,36 @@
 #include <memory>
 #include <vector>
 
-namespace ZEngine {
-    
+namespace z_engine
+{
     struct SimplePushConstantData
     {
-        glm::mat4 modelMatrix {1.0f};
-        glm::mat4 normalMatrix {1.0f};
+        glm::mat4 modelMatrix{1.0f};
+        glm::mat4 normalMatrix{1.0f};
     };
-    
+
     class ZRenderSystem
     {
     public:
-        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout);
+        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
+                      VkDescriptorSetLayout textureSetLayout);
         ~ZRenderSystem();
-        
+
         ZRenderSystem(const ZRenderSystem&) = delete;
-        ZRenderSystem &operator=(const ZRenderSystem&) = delete;
-    
-        void render(FrameInfo &frameinfo, VkDescriptorSet textureDescriptorSet);
-    
+        ZRenderSystem& operator=(const ZRenderSystem&) = delete;
+
+        void render(FrameInfo& frameinfo, VkDescriptorSet textureDescriptorSet);
+
     private:
         const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/shader.vert.spv";
         const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/shader.frag.spv";
-        
+
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout);
         void createPipeline(VkRenderPass renderPass);
-        
+
         ZDevice& Device;
-        
+
         std::unique_ptr<ZPipeline> pipeline;
         VkPipelineLayout pipelineLayout;
     };
-    
 }

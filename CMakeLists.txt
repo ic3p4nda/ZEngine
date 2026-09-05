@@ -8,11 +8,11 @@ message(STATUS "using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     if (NOT MINGW_PATH)
         message(FATAL_ERROR "MINGW_PATH not set in .env.cmake")
-    endif()
+    endif ()
     set(USE_MINGW "True")
     set(CMAKE_C_COMPILER ${MINGW_PATH}/bin/gcc.exe)
-    set(CMAKE_CXX_COMPILER  ${MINGW_PATH}/bin/g++.exe)
-endif()
+    set(CMAKE_CXX_COMPILER ${MINGW_PATH}/bin/g++.exe)
+endif ()
 
 project(${NAME} VERSION 0.23.0)
 
@@ -20,15 +20,15 @@ if (DEFINED VULKAN_SDK_PATH)
     set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
     set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
     set(Vulkan_FOUND "True")
-else()
+else ()
     find_package(Vulkan REQUIRED)
     message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
-endif()
+endif ()
 if (NOT Vulkan_FOUND)
     message(FATAL_ERROR "Could not find Vulkan library!")
-else()
+else ()
     message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
-endif()
+endif ()
 
 
 if (DEFINED GLFW_PATH)
@@ -39,29 +39,29 @@ if (DEFINED GLFW_PATH)
     elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
         message(STATUS "USING MINGW")
         set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64")
-    endif()
-else()
+    endif ()
+else ()
     find_package(glfw3 3.3 REQUIRED)
     set(GLFW_LIB glfw)
     message(STATUS "Found GLFW")
-endif()
+endif ()
 if (NOT GLFW_LIB)
     message(FATAL_ERROR "Could not find glfw library!")
-else()
+else ()
     message(STATUS "Using glfw lib at: ${GLFW_LIB}")
-endif()
+endif ()
 
 include_directories(external)
-    
+
 if (NOT TINYOBJ_PATH)
     message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
     set(TINYOBJ_PATH external/tinyobjloader)
-endif()
+endif ()
 
 if (NOT STBIMAGE_PATH)
     message(STATUS "STBIMAGE_PATH not specified in .env.cmake, using external/stb_image")
     set(STBIMAGE_PATH external/stb_image)
-endif()
+endif ()
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/ZEngine/src/*.cpp ${PROJECT_SOURCE_DIR}/ZEngine/src/*.h)
 file(GLOB_RECURSE SHADERS ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag ${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.vert)
@@ -87,20 +87,21 @@ if (USE_MINGW)
     target_link_directories(${PROJECT_NAME} PUBLIC
             ${MINGW_PATH}/lib
     )
-endif()
+endif ()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/ZEngine/src/
-    ${Vulkan_INCLUDE_DIRS}
-    ${TINYOBJ_PATH}
-    ${GLFW_INCLUDE_DIRS}
-    ${GLM_PATH} 
+        ${PROJECT_SOURCE_DIR}/ZEngine/src/
+        ${Vulkan_INCLUDE_DIRS}
+        ${TINYOBJ_PATH}
+        ${GLFW_INCLUDE_DIRS}
+        ${GLM_PATH}
         ${STBIMAGE_PATH}
         ${IMGUI_PATH}
+        ${VMA_PATH}
 )
 
-target_link_directories(${PROJECT_NAME} PUBLIC 
-        ${Vulkan_LIBRARIES} 
+target_link_directories(${PROJECT_NAME} PUBLIC
+        ${Vulkan_LIBRARIES}
         ${GLFW_LIB}
 )
 
@@ -115,9 +116,9 @@ find_program(GLSL_COMPILER glslc HINTS
         /usr/local/bin
 )
 
-if(NOT GLSL_COMPILER)
+if (NOT GLSL_COMPILER)
     message(FATAL_ERROR "glslc compiler not found! Make sure Vulkan SDK is installed and VULKAN_SDK environment variable is set.")
-endif()
+endif ()
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
         "${PROJECT_SOURCE_DIR}/ZEngine/shaders/*.frag"
@@ -128,7 +129,7 @@ set(SPIRV_BINARY_FILES "")
 
 file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/ZEngine/shaders")
 
-foreach(GLSL ${GLSL_SOURCE_FILES})
+foreach (GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)
     set(SPIRV "${PROJECT_SOURCE_DIR}/ZEngine/shaders/${FILE_NAME}.spv")
 
@@ -140,7 +141,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
             VERBATIM
     )
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
-endforeach()
+endforeach ()
 
 add_custom_target(
         Shaders ALL

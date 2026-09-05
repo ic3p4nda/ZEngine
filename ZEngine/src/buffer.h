@@ -1,59 +1,59 @@
 ﻿#pragma once
- 
+
 #include "device.h"
- 
-namespace ZEngine {
- 
-class ZBuffer {
- public:
-  ZBuffer(
-      ZDevice& device,
-      VkDeviceSize instanceSize,
-      uint32_t instanceCount,
-      VkBufferUsageFlags usageFlags,
-      VkMemoryPropertyFlags memoryPropertyFlags,
-      VkDeviceSize minOffsetAlignment = 1);
-  ~ZBuffer();
- 
-  ZBuffer(const ZBuffer&) = delete;
-  ZBuffer& operator=(const ZBuffer&) = delete;
- 
-  VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-  void unmap();
- 
-  void writeToBuffer(void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-  VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-  VkDescriptorBufferInfo descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-  VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
- 
-  void writeToIndex(void* data, int index);
-  VkResult flushIndex(int index);
-  VkDescriptorBufferInfo descriptorInfoForIndex(int index);
-  VkResult invalidateIndex(int index);
- 
-  VkBuffer getBuffer() const { return buffer; }
-  void* getMappedMemory() const { return mapped; }
-  uint32_t getInstanceCount() const { return instanceCount; }
-  VkDeviceSize getInstanceSize() const { return instanceSize; }
-  VkDeviceSize getAlignmentSize() const { return alignmentSize; }
-  VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
-  VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
-  VkDeviceSize getBufferSize() const { return bufferSize; }
- 
- private:
-  static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
- 
-  ZDevice& Device;
-  void* mapped = nullptr;
-  VkBuffer buffer = VK_NULL_HANDLE;
-  VkDeviceMemory memory = VK_NULL_HANDLE;
- 
-  VkDeviceSize bufferSize;
-  uint32_t instanceCount;
-  VkDeviceSize instanceSize;
-  VkDeviceSize alignmentSize;
-  VkBufferUsageFlags usageFlags;
-  VkMemoryPropertyFlags memoryPropertyFlags;
-};
- 
+
+namespace z_engine
+{
+    class ZBuffer
+    {
+    public:
+        ZBuffer(
+            ZDevice& device,
+            VkDeviceSize instance_size,
+            uint32_t instance_count,
+            VkBufferUsageFlags usage_flags,
+            VkMemoryPropertyFlags memory_property_flags,
+            VkDeviceSize min_offset_alignment = 1);
+        ~ZBuffer();
+
+        ZBuffer(const ZBuffer&) = delete;
+        ZBuffer& operator=(const ZBuffer&) = delete;
+
+        VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        void unmap();
+
+        void WriteToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const;
+        VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const;
+        VkDescriptorBufferInfo DescriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const;
+        VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const;
+
+        void WriteToIndex(const void* data, int index) const;
+        VkResult FlushIndex(int index) const;
+        VkDescriptorBufferInfo DescriptorInfoForIndex(int index) const;
+        VkResult InvalidateIndex(int index) const;
+
+        VkBuffer GetBuffer() const;
+        void* GetMappedMemory() const { return mapped_; }
+        uint32_t GetInstanceCount() const { return instance_count_; }
+        VkDeviceSize GetInstanceSize() const { return instance_size_; }
+        VkDeviceSize GetAlignmentSize() const { return alignment_size_; }
+        VkBufferUsageFlags GetUsageFlags() const { return usage_flags_; }
+        VkMemoryPropertyFlags GetMemoryPropertyFlags() const { return memoryPropertyFlags; }
+        VkDeviceSize GetBufferSize() const { return buffer_size_; }
+
+    private:
+        static VkDeviceSize GetAlignment(VkDeviceSize instance_size, VkDeviceSize min_offset_alignment);
+
+        ZDevice& device_;
+        void* mapped_ = nullptr;
+        VkBuffer buffer_ = VK_NULL_HANDLE;
+        VkDeviceMemory memory_ = VK_NULL_HANDLE;
+
+        VkDeviceSize buffer_size_;
+        uint32_t instance_count_;
+        VkDeviceSize instance_size_;
+        VkDeviceSize alignment_size_;
+        VkBufferUsageFlags usage_flags_;
+        VkMemoryPropertyFlags memoryPropertyFlags;
+    };
 }

@@ -6,7 +6,7 @@
 #include "buffer.h"
 #include "stb_image.h"
 
-namespace ZEngine
+namespace z_engine
 {
     ZTexture::ZTexture(ZDevice& device, const std::string& filepath) : device(device)
     {
@@ -26,26 +26,26 @@ namespace ZEngine
     void ZTexture::createTextureImage(const std::string& filepath)
     {
         int texChannels;
-        stbi_uc *pixels = stbi_load(filepath.c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(filepath.c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = width * height * 4;
-        
+
         if (!pixels) throw std::runtime_error("Failed to load texture image " + filepath);
-        
+
         imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
-        
+
         ZBuffer stagingBuffer(
             device, imageSize, 1,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        
+
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer(pixels);
+        stagingBuffer.WriteToBuffer(pixels);
         stbi_image_free(pixels);
-        
+
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
+        imageInfo.extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
         imageInfo.format = imageFormat;
@@ -54,12 +54,12 @@ namespace ZEngine
         imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        
-        device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
+
+        device.CreateImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
 
         transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        device.copyBufferToImage(stagingBuffer.getBuffer(), image,
-            static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
+        device.CopyBufferToImage(stagingBuffer.GetBuffer(), image,
+                                 static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
         transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -92,7 +92,7 @@ namespace ZEngine
         samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = device.properties.limits.maxSamplerAnisotropy;
+        samplerInfo.maxAnisotropy = device.properties_.limits.maxSamplerAnisotropy;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         samplerInfo.unnormalizedCoordinates = VK_FALSE;
         samplerInfo.compareEnable = VK_FALSE;
@@ -105,7 +105,7 @@ namespace ZEngine
 
     void ZTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
     {
-        VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = device.BeginSingleTimeCommands();
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -122,25 +122,29 @@ namespace ZEngine
 
         VkPipelineStageFlags sourceStage, destinationStage;
 
-        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        }
+        else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout ==
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        {
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        } else {
+        }
+        else
+        {
             throw std::invalid_argument("unsupported layout transition!");
         }
 
         vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0,
-            0, nullptr, 0, nullptr, 1, &barrier);
+                             0, nullptr, 0, nullptr, 1, &barrier);
 
-        device.endSingleTimeCommands(commandBuffer);
+        device.EndSingleTimeCommands(commandBuffer);
     }
-    
-    
 }

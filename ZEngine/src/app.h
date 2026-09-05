@@ -18,31 +18,31 @@
 
 #define MAX_FRAME_TIME 0.5f
 
-namespace ZEngine {
+namespace z_engine
+{
     class ZApp
     {
     public:
-        static constexpr int WIDTH = 800;
-        static constexpr int HEIGHT = 600;
-        
+        static constexpr int width_ = 800;
+        static constexpr int height_ = 600;
+
         ZApp();
         ~ZApp();
-        
+
         ZApp(const ZApp&) = delete;
-        ZApp &operator=(const ZApp&) = delete;
-        
+        ZApp& operator=(const ZApp&) = delete;
+
         void run();
-    
+
     private:
         void LoadGameObjects();
-        
-        ZWindow Window{WIDTH , HEIGHT , "HelloWorld"};
-        ZDevice Device{Window};
-        ZRenderer Renderer{Window, Device};
-        ZImguiLayer ImguiLayer{Device, Renderer.getSwapchainRenderPass(), Window.getGLFWwindow()};
-        
-        std::unique_ptr<ZDescriptorPool> globalPool{};
-        ZGameObject::MAP gameObjects;
+
+        ZWindow window_{width_, height_, "HelloWorld"};
+        ZDevice device_{window_};
+        ZRenderer renderer_{window_, device_};
+        ZImguiLayer imgui_layer_{device_, renderer_.getSwapchainRenderPass(), window_.getGLFWwindow()};
+
+        std::unique_ptr<ZDescriptorPool> global_pool_{};
+        ZGameObject::MAP game_objects_;
     };
-    
 }

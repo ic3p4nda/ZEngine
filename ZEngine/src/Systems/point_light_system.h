@@ -15,31 +15,31 @@
 #include <memory>
 #include <vector>
 
-namespace ZEngine {
+namespace z_engine
+{
     class ZPointLightSystem
     {
     public:
         ZPointLightSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
         ~ZPointLightSystem();
-        
+
         ZPointLightSystem(const ZPointLightSystem&) = delete;
-        ZPointLightSystem &operator=(const ZPointLightSystem&) = delete;
-    
+        ZPointLightSystem& operator=(const ZPointLightSystem&) = delete;
+
         void update(FrameInfo& frameInfo, GlobalUbo& ubo);
-        
-        void render(FrameInfo &frameinfo);
-    
+
+        void render(FrameInfo& frameinfo);
+
     private:
         const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.vert.spv";
         const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.frag.spv";
-        
+
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
-        
+
         ZDevice& Device;
-        
+
         std::unique_ptr<ZPipeline> pipeline;
         VkPipelineLayout pipelineLayout;
     };
-    
 }

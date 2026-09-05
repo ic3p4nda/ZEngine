@@ -3,14 +3,13 @@
 #include "game_object.h"
 #include "window.h"
 
-namespace ZEngine
+namespace z_engine
 {
     class ZKeyboardMovementController
     {
     public:
-        
         ZKeyboardMovementController(GLFWwindow* window);
-        
+
         struct KeyMappings
         {
             int moveLeft = GLFW_KEY_A;
@@ -24,13 +23,13 @@ namespace ZEngine
             int lookUp = GLFW_KEY_UP;
             int lookDown = GLFW_KEY_DOWN;
         };
-        
+
         void moveInPlaneXZ(ZWindow& window, float deltaTime, ZGameObject& gameObject);
-        
+
         KeyMappings keys{};
         float moveSpeed = 3.0f;
         float mouseSensitivity = 3.0f;
-        
+
     private:
         bool isLooking = false;
         double lastMouseX = 0.0;

@@ -4,7 +4,7 @@
 #include <ostream>
 #include <stdexcept>
 
-namespace ZEngine
+namespace z_engine
 {
     ZWindow::ZWindow(int w, int h, std::string t) : width(w), height(h), windowTitle(t)
     {
@@ -30,7 +30,7 @@ namespace ZEngine
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        
+
         window = glfwCreateWindow(width, height, windowTitle.c_str(), nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
@@ -44,4 +44,3 @@ namespace ZEngine
         engineWindow->height = height;
     }
 }
-

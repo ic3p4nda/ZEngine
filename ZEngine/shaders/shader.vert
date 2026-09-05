@@ -15,7 +15,7 @@ struct PointLight {
     vec4 color;
 };
 
-layout(set = 0, binding = 0) uniform GlobalUbo {
+layout (set = 0, binding = 0) uniform GlobalUbo {
     mat4 projection;
     mat4 view;
     mat4 inverseView;
@@ -24,7 +24,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
-layout (push_constant) uniform Push{
+layout (push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } push;
@@ -32,14 +32,14 @@ layout (push_constant) uniform Push{
 void main() {
     vec4 positionWorld = push.modelMatrix * vec4(position, 1.0);
     gl_Position = ubo.projection * ubo.view * push.modelMatrix * vec4(position, 1.0);
-    
+
     // Only works if scale is uniform (sx == sy == sz)
     // vec3 normalWorldSpace = normalize(mat3(push.modelMatrix) * normal);
-    
+
     // calculating the inverse in a shader is expensive
     // mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)));
     // vec3 normalWorldSpace = normalize(normalMatrix * normal);
-    
+
     fragNormalWorld = normalize(mat3(push.normalMatrix) * normal);
     fragPosWorld = positionWorld.xyz;
     fragColor = color;

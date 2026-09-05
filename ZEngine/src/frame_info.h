@@ -5,17 +5,16 @@
 
 #include <vulkan/vulkan.h>
 
-namespace ZEngine
+namespace z_engine
 {
-    
 #define MAX_LIGHTS 10
-    
+
     struct PointLight
     {
         glm::vec4 position{}; // ignore W
         glm::vec4 color{};
     };
-    
+
     struct GlobalUbo
     {
         glm::mat4 projection{1.0f};
@@ -25,14 +24,14 @@ namespace ZEngine
         PointLight pointLights[MAX_LIGHTS];
         int numLights;
     };
-    
+
     struct FrameInfo
     {
         int frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
-        ZCamera &camera;
+        ZCamera& camera;
         VkDescriptorSet globalDescriptorSet;
-        ZGameObject::MAP &gameObjects;
+        ZGameObject::MAP& gameObjects;
     };
 }

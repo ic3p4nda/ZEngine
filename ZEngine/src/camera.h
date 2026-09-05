@@ -4,31 +4,31 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
-namespace ZEngine
+namespace z_engine
 {
     class ZCamera
     {
     public:
-        void setOrthographicProjection(
+        void SetOrthographicProjection(
             float left, float right, float bottom, float top, float near, float far);
-        
-        void setPerspectiveProjection(
+
+        void SetPerspectiveProjection(
             float fovy, float aspect, float near, float far);
-        
-        void setViewDirection(
+
+        void SetViewDirection(
             glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3(0.0f, -1.0f, 0.0f));
-        void setViewTarget(
+        void SetViewTarget(
             glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3(0.0f, -1.0f, 0.0f));
-        void setViewYXZ(glm::vec3 position, glm::vec3 rotation);
-        
-        const glm::mat4& getProjection() const {return projectionMatrix;}
-        const glm::mat4& getView() const {return viewMatrix;}
-        const glm::mat4& getInverseView() const {return inverseViewMatrix;}
-        const glm::vec3 getPosition() const {return glm::vec3(inverseViewMatrix[3]);}
-        
+        void SetViewYxz(glm::vec3 position, glm::vec3 rotation);
+
+        const glm::mat4& GetProjection() const { return projection_matrix_; }
+        const glm::mat4& GetView() const { return view_matrix_; }
+        const glm::mat4& GetInverseView() const { return inverse_view_matrix_; }
+        glm::vec3 GetPosition() const { return glm::vec3(inverse_view_matrix_[3]); }
+
     private:
-        glm::mat4 projectionMatrix{1.0f};
-        glm::mat4 viewMatrix{1.0f};
-        glm::mat4 inverseViewMatrix{1.0f};
+        glm::mat4 projection_matrix_{1.0f};
+        glm::mat4 view_matrix_{1.0f};
+        glm::mat4 inverse_view_matrix_{1.0f};
     };
 }

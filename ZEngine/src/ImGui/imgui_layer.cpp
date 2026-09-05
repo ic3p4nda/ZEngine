@@ -4,12 +4,12 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
-namespace ZEngine
+namespace z_engine
 {
     ZImguiLayer::ZImguiLayer(ZDevice& device, VkRenderPass renderpass, GLFWwindow* window) : _device(device)
     {
         createDescriptorPool();
-        
+
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
@@ -22,10 +22,10 @@ namespace ZEngine
 
         ImGui_ImplVulkan_InitInfo initInfo = {};
         initInfo.Instance = device.instance();
-        initInfo.PhysicalDevice = device.physicalDevice();
+        initInfo.PhysicalDevice = device.PhysicalDevice();
         initInfo.Device = device.device();
-        initInfo.QueueFamily = device.findPhysicalQueueFamilies().graphicsFamily;
-        initInfo.Queue = device.graphicsQueue();
+        initInfo.QueueFamily = device.FindPhysicalQueueFamilies().graphics_family;
+        initInfo.Queue = device.GraphicsQueue();
         // initInfo.DescriptorPool = _imguiPool;
         initInfo.DescriptorPoolSize = 64;
         initInfo.MinImageCount = 3;
@@ -34,7 +34,6 @@ namespace ZEngine
         initInfo.PipelineInfoMain = pipelineInfo;
 
         ImGui_ImplVulkan_Init(&initInfo);
-        
     }
 
     ZImguiLayer::~ZImguiLayer()
@@ -62,19 +61,18 @@ namespace ZEngine
     void ZImguiLayer::createDescriptorPool()
     {
         VkDescriptorPoolSize poolSizes[]
-        { {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }};
-        
+            {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
+
         VkDescriptorPoolCreateInfo poolinfo{};
         poolinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolinfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         poolinfo.maxSets = 1;
         poolinfo.poolSizeCount = 1;
         poolinfo.pPoolSizes = poolSizes;
-        
+
         if (vkCreateDescriptorPool(_device.device(), &poolinfo, nullptr, &_imguiPool))
         {
             throw std::runtime_error("failed to create descriptor pool!");
-        };
+        }
     }
-    
 }
