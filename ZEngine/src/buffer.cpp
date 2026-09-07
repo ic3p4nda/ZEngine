@@ -58,7 +58,7 @@ namespace z_engine
     ZBuffer::~ZBuffer()
     {
         unmap();
-        vkDestroyBuffer(device_.device(), buffer_, nullptr);
+        vmaDestroyBuffer(device_.GetAllocator(), buffer_, allocation_);
     }
 
     /**

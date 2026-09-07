@@ -72,11 +72,6 @@ namespace z_engine
         void CopyBufferToImage(
             VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count);
 
-        void CreateImageWithInfo(
-            const VkImageCreateInfo& image_info,
-            VkMemoryPropertyFlags properties,
-            VkImage& image,
-            VkDeviceMemory& image_memory);
 
         VkPhysicalDeviceProperties properties_;
 

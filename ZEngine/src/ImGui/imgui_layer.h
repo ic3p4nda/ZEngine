@@ -8,7 +8,7 @@ namespace z_engine
     class ZImguiLayer
     {
     public:
-        ZImguiLayer(ZDevice& device, VkRenderPass renderpass, GLFWwindow* window);
+        ZImguiLayer(ZDevice& device, VkFormat color_format, VkFormat depth_format, GLFWwindow* window);
         ~ZImguiLayer();
 
         ZImguiLayer(const ZImguiLayer&) = delete;

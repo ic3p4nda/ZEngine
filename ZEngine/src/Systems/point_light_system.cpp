@@ -16,11 +16,11 @@ namespace z_engine
         float radius;
     };
 
-    ZPointLightSystem::ZPointLightSystem(ZDevice& device, VkRenderPass renderpass,
+    ZPointLightSystem::ZPointLightSystem(ZDevice& device, VkFormat color_format, VkFormat depth_format,
                                          VkDescriptorSetLayout globalSetLayout) : Device(device)
     {
         createPipelineLayout(globalSetLayout);
-        createPipeline(renderpass);
+        createPipeline(color_format, depth_format);
     }
 
     ZPointLightSystem::~ZPointLightSystem()
@@ -50,17 +50,18 @@ namespace z_engine
         }
     }
 
-    void ZPointLightSystem::createPipeline(VkRenderPass renderpass)
+    void ZPointLightSystem::createPipeline(VkFormat color_format, VkFormat depth_format)
     {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
         PipelineConfigInfo pipelineConfig{};
         ZPipeline::defaultPipelineConfigInfo(pipelineConfig);
         ZPipeline::enableAlphaBlending(pipelineConfig);
-        pipelineConfig.attributeDescriptions.clear();
-        pipelineConfig.bindingDescriptions.clear();
-        pipelineConfig.renderPass = renderpass;
-        pipelineConfig.pipelineLayout = pipelineLayout;
+        pipelineConfig.attribute_descriptions.clear();
+        pipelineConfig.binding_descriptions.clear();
+        pipelineConfig.color_attachement_format = color_format;
+        pipelineConfig.depth_attachement_format = depth_format;
+        pipelineConfig.pipeline_layout = pipelineLayout;
         pipeline = std::make_unique<ZPipeline>(Device,
                                                pipelineConfig,
                                                VERTEXSHADERPATH,

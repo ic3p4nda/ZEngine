@@ -27,7 +27,7 @@ namespace z_engine
             bool operator==(const Vertex& other) const
             {
                 return position == other.position &&
-                    color == other.color && normal == other.normal;
+                    color == other.color && normal == other.normal && uv == other.uv;
             }
         };
 

@@ -14,45 +14,53 @@ namespace z_engine
     class ZRenderer
     {
     public:
-        ZRenderer(ZWindow& Window, ZDevice& Device);
+        ZRenderer(ZWindow& window, ZDevice& device);
         ~ZRenderer();
 
         ZRenderer(const ZRenderer&) = delete;
         ZRenderer& operator=(const ZRenderer&) = delete;
 
-        VkRenderPass getSwapchainRenderPass() const { return Swapchain->getRenderPass(); };
-        float getAspectRatio() const { return Swapchain->extentAspectRatio(); };
-        bool isFrameInProgress() const { return isFrameStarted; };
+        VkFormat GetDepthFormat() const { return swapchain_->FindDepthFormat(); };
+        VkFormat GetImageFormat() const { return swapchain_->GetSwapChainImageFormat(); };
+        float GetAspectRatio() const { return swapchain_->ExtentAspectRatio(); };
+        bool IsFrameInProgress() const { return is_frame_started_; };
 
-        VkCommandBuffer getCurrentCommandBuffer() const
+        VkCommandBuffer GetCurrentCommandBuffer() const
         {
-            assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-            return commandBuffers[currentFrameIndex];
-        };
+            assert(is_frame_started_ && "Cannot get command buffer when frame not in progress");
+            return command_buffers_[current_frame_index_];
+        }
 
-        int getFrameIndex() const
+        int GetFrameIndex() const
         {
-            assert(isFrameStarted && "Cannot get Frame index when frame not in progress");
-            return currentFrameIndex;
-        };
+            assert(is_frame_started_ && "Cannot get Frame index when frame not in progress");
+            return current_frame_index_;
+        }
 
-        VkCommandBuffer beginFrame();
-        void endFrame();
-        void beginSwapchainRenderPass(VkCommandBuffer commandBuffer);
-        void endSwapchainRenderPass(VkCommandBuffer commandBuffer);
+        
+        void TransitionImageLayout(VkCommandBuffer command_buffer,
+        VkImage image,
+        VkImageLayout old_layout,
+        VkImageLayout new_layout,
+        VkImageAspectFlags aspect_mask);
+        
+        VkCommandBuffer BeginFrame();
+        void EndFrame();
+        void BeginSwapchainRenderPass(VkCommandBuffer command_buffer);
+        void EndSwapchainRenderPass(VkCommandBuffer command_buffer);
 
     private:
-        void createCommandBuffers();
-        void freeCommandBuffers();
-        void recreateSwapchain();
+        void CreateCommandBuffers();
+        void FreeCommandBuffers();
+        void RecreateSwapchain();
 
-        ZWindow& Window;
-        ZDevice& Device;
-        std::unique_ptr<ZSwapChain> Swapchain;
-        std::vector<VkCommandBuffer> commandBuffers;
+        ZWindow& window_;
+        ZDevice& device_;
+        std::unique_ptr<ZSwapChain> swapchain_;
+        std::vector<VkCommandBuffer> command_buffers_;
 
-        uint32_t currentImageIndex = 0;
-        int currentFrameIndex = 0;
-        bool isFrameStarted = false;
+        uint32_t current_image_index_ = 0;
+        int current_frame_index_ = 0;
+        bool is_frame_started_ = false;
     };
 }

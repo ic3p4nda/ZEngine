@@ -20,7 +20,7 @@ namespace z_engine
     class ZPointLightSystem
     {
     public:
-        ZPointLightSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+        ZPointLightSystem(ZDevice& device, VkFormat color_format, VkFormat depth_format, VkDescriptorSetLayout globalSetLayout);
         ~ZPointLightSystem();
 
         ZPointLightSystem(const ZPointLightSystem&) = delete;
@@ -35,7 +35,7 @@ namespace z_engine
         const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.frag.spv";
 
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline(VkFormat color_format, VkFormat depth_format);
 
         ZDevice& Device;
 

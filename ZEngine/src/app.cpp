@@ -28,6 +28,7 @@ namespace z_engine
 
     ZApp::~ZApp()
     {
+        vkDeviceWaitIdle(device_.device());
     }
 
     void ZApp::run()
@@ -55,7 +56,7 @@ namespace z_engine
         auto brick_texture = std::make_shared<ZTexture>(device_, "C:/_dev/ZEngine/models/brick.jpg");
 
         VkDescriptorSet floor_texture_descriptor_set;
-        auto image_info = brick_texture->descriptorInfo();
+        auto image_info = brick_texture->DescriptorInfo();
         ZDescriptorWriter(*texture_set_layout, *global_pool_)
             .WriteImage(0, &image_info)
             .build(floor_texture_descriptor_set);
@@ -73,13 +74,15 @@ namespace z_engine
 
         ZRenderSystem simple_render_system{
             device_,
-            renderer_.getSwapchainRenderPass(),
+            renderer_.GetImageFormat(),
+            renderer_.GetDepthFormat(),
             global_set_layout->GetDescriptorSetLayout(),
             texture_set_layout->GetDescriptorSetLayout()
         };
         ZPointLightSystem point_light_system{
             device_,
-            renderer_.getSwapchainRenderPass(),
+            renderer_.GetImageFormat(),
+            renderer_.GetDepthFormat(),
             global_set_layout->GetDescriptorSetLayout()
         };
         ZCamera camera{};
@@ -106,13 +109,13 @@ namespace z_engine
 
             camera_controller.moveInPlaneXZ(window_, frame_time, viewer_object);
             camera.SetViewYxz(viewer_object.transform.translation, viewer_object.transform.rotation);
-            float aspect = renderer_.getAspectRatio();
+            float aspect = renderer_.GetAspectRatio();
 
             camera.SetPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 100.0f);
 
-            if (auto command_buffer = renderer_.beginFrame())
+            if (auto command_buffer = renderer_.BeginFrame())
             {
-                int frame_index = renderer_.getFrameIndex();
+                int frame_index = renderer_.GetFrameIndex();
                 FrameInfo frame_info{
                     frame_index,
                     frame_time,
@@ -131,7 +134,7 @@ namespace z_engine
                 ubo_buffers[frame_index]->WriteToBuffer(&ubo);
 
                 //Render
-                renderer_.beginSwapchainRenderPass(command_buffer);
+                renderer_.BeginSwapchainRenderPass(command_buffer);
                 simple_render_system.render(frame_info, floor_texture_descriptor_set);
                 point_light_system.render(frame_info);
 
@@ -151,8 +154,8 @@ namespace z_engine
                 ImGui::End();
                 imgui_layer_.render(command_buffer);
 
-                renderer_.endSwapchainRenderPass(command_buffer);
-                renderer_.endFrame();
+                renderer_.EndSwapchainRenderPass(command_buffer);
+                renderer_.EndFrame();
             }
         }
 

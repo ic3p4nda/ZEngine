@@ -11,95 +11,94 @@
 
 namespace z_engine
 {
-    ZSwapChain::ZSwapChain(ZDevice& deviceRef, VkExtent2D extent)
-        : device_{deviceRef}, windowExtent{extent}
+    ZSwapChain::ZSwapChain(ZDevice& device_ref, VkExtent2D extent)
+        : device_{device_ref}, window_extent_{extent}
     {
         init();
     }
 
-    ZSwapChain::ZSwapChain(ZDevice& deviceRef, VkExtent2D extent, std::shared_ptr<ZSwapChain> previous) :
-        device_{deviceRef}, windowExtent{extent}, oldSwapChain{previous}
+    ZSwapChain::ZSwapChain(ZDevice& device_ref, VkExtent2D extent, std::shared_ptr<ZSwapChain> previous) :
+        device_{device_ref}, window_extent_{extent}, old_swap_chain_{previous}
     {
         init();
 
         // clean up old swapchain
-        oldSwapChain = nullptr;
+        old_swap_chain_ = nullptr;
     }
 
     ZSwapChain::~ZSwapChain()
     {
-        for (auto imageView : swapChainImageViews)
+        for (auto imageView : swap_chain_image_views_)
         {
             vkDestroyImageView(device_.device(), imageView, nullptr);
         }
-        swapChainImageViews.clear();
+        swap_chain_image_views_.clear();
 
-        if (swapChain != nullptr)
+        if (swap_chain_ != nullptr)
         {
-            vkDestroySwapchainKHR(device_.device(), swapChain, nullptr);
-            swapChain = nullptr;
+            vkDestroySwapchainKHR(device_.device(), swap_chain_, nullptr);
+            swap_chain_ = nullptr;
         }
 
-        for (int i = 0; i < depthImages.size(); i++)
+        for (int i = 0; i < depth_images_.size(); i++)
         {
-            vkDestroyImageView(device_.device(), depthImageViews[i], nullptr);
-            vkDestroyImage(device_.device(), depthImages[i], nullptr);
-            vkFreeMemory(device_.device(), depthImageMemorys[i], nullptr);
+            vkDestroyImageView(device_.device(), depth_image_views_[i], nullptr);
+            vmaDestroyImage(device_.GetAllocator(), depth_images_[i] ,depth_image_allocation_[i]);
         }
 
-        for (auto framebuffer : swapChainFramebuffers)
+        for (auto framebuffer : swap_chain_framebuffers_)
         {
             vkDestroyFramebuffer(device_.device(), framebuffer, nullptr);
         }
 
-        vkDestroyRenderPass(device_.device(), renderPass, nullptr);
+        vkDestroyRenderPass(device_.device(), render_pass_, nullptr);
 
         // cleanup synchronization objects
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vkDestroySemaphore(device_.device(), imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(device_.device(), inFlightFences[i], nullptr);
+            vkDestroySemaphore(device_.device(), image_available_semaphores_[i], nullptr);
+            vkDestroyFence(device_.device(), in_flight_fences_[i], nullptr);
         }
 
-        for (size_t i = 0; i < renderFinishedSemaphores.size(); i++)
+        for (size_t i = 0; i < render_finished_semaphores_.size(); i++)
         {
-            vkDestroySemaphore(device_.device(), renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(device_.device(), render_finished_semaphores_[i], nullptr);
         }
     }
 
-    VkResult ZSwapChain::acquireNextImage(uint32_t* imageIndex)
+    VkResult ZSwapChain::AcquireNextImage(uint32_t* image_index)
     {
         vkWaitForFences(
             device_.device(),
             1,
-            &inFlightFences[currentFrame],
+            &in_flight_fences_[current_frame_],
             VK_TRUE,
             std::numeric_limits<uint64_t>::max());
 
         VkResult result = vkAcquireNextImageKHR(
             device_.device(),
-            swapChain,
+            swap_chain_,
             std::numeric_limits<uint64_t>::max(),
-            imageAvailableSemaphores[currentFrame], // must be a not signaled semaphore
+            image_available_semaphores_[current_frame_], // must be a not signaled semaphore
             VK_NULL_HANDLE,
-            imageIndex);
+            image_index);
 
         return result;
     }
 
-    VkResult ZSwapChain::submitCommandBuffers(
-        const VkCommandBuffer* buffers, uint32_t* imageIndex)
+    VkResult ZSwapChain::SubmitCommandBuffers(
+        const VkCommandBuffer* buffers, uint32_t* image_index)
     {
-        if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
+        if (images_in_flight_[*image_index] != VK_NULL_HANDLE)
         {
-            vkWaitForFences(device_.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+            vkWaitForFences(device_.device(), 1, &images_in_flight_[*image_index], VK_TRUE, UINT64_MAX);
         }
-        imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+        images_in_flight_[*image_index] = in_flight_fences_[current_frame_];
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+        VkSemaphore waitSemaphores[] = {image_available_semaphores_[current_frame_]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
@@ -108,12 +107,12 @@ namespace z_engine
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = buffers;
 
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[*imageIndex]};
+        VkSemaphore signalSemaphores[] = {render_finished_semaphores_[*image_index]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(device_.device(), 1, &inFlightFences[currentFrame]);
-        if (vkQueueSubmit(device_.GraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) !=
+        vkResetFences(device_.device(), 1, &in_flight_fences_[current_frame_]);
+        if (vkQueueSubmit(device_.GraphicsQueue(), 1, &submitInfo, in_flight_fences_[current_frame_]) !=
             VK_SUCCESS)
         {
             throw std::runtime_error("failed to submit draw command buffer!");
@@ -125,36 +124,36 @@ namespace z_engine
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = {swapChain};
+        VkSwapchainKHR swapChains[] = {swap_chain_};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
 
-        presentInfo.pImageIndices = imageIndex;
+        presentInfo.pImageIndices = image_index;
 
         auto result = vkQueuePresentKHR(device_.PresentQueue(), &presentInfo);
 
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 
         return result;
     }
 
     void ZSwapChain::init()
     {
-        createSwapChain();
-        createImageViews();
-        createRenderPass();
-        createDepthResources();
-        createFramebuffers();
-        createSyncObjects();
+        CreateSwapChain();
+        CreateImageViews();
+        CreateRenderPass();
+        CreateDepthResources();
+        CreateFramebuffers();
+        CreateSyncObjects();
     }
 
-    void ZSwapChain::createSwapChain()
+    void ZSwapChain::CreateSwapChain()
     {
         SwapChainSupportDetails swapChainSupport = device_.GetSwapChainSupport();
 
-        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-        VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.present_modes);
-        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+        VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+        VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.present_modes);
+        VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 &&
@@ -196,9 +195,9 @@ namespace z_engine
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
 
-        createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
+        createInfo.oldSwapchain = old_swap_chain_ == nullptr ? VK_NULL_HANDLE : old_swap_chain_->swap_chain_;
 
-        if (vkCreateSwapchainKHR(device_.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
+        if (vkCreateSwapchainKHR(device_.device(), &createInfo, nullptr, &swap_chain_) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create swap chain!");
         }
@@ -207,31 +206,31 @@ namespace z_engine
         // allowed to create a swap chain with more. That's why we'll first query the final number of
         // images with vkGetSwapchainImagesKHR, then resize the container and finally call it again to
         // retrieve the handles.
-        vkGetSwapchainImagesKHR(device_.device(), swapChain, &imageCount, nullptr);
-        swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(device_.device(), swapChain, &imageCount, swapChainImages.data());
+        vkGetSwapchainImagesKHR(device_.device(), swap_chain_, &imageCount, nullptr);
+        swap_chain_images_.resize(imageCount);
+        vkGetSwapchainImagesKHR(device_.device(), swap_chain_, &imageCount, swap_chain_images_.data());
 
-        swapChainImageFormat = surfaceFormat.format;
-        swapChainExtent = extent;
+        swap_chain_image_format_ = surfaceFormat.format;
+        swap_chain_extent_ = extent;
     }
 
-    void ZSwapChain::createImageViews()
+    void ZSwapChain::CreateImageViews()
     {
-        swapChainImageViews.resize(swapChainImages.size());
-        for (size_t i = 0; i < swapChainImages.size(); i++)
+        swap_chain_image_views_.resize(swap_chain_images_.size());
+        for (size_t i = 0; i < swap_chain_images_.size(); i++)
         {
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = swapChainImages[i];
+            viewInfo.image = swap_chain_images_[i];
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            viewInfo.format = swapChainImageFormat;
+            viewInfo.format = swap_chain_image_format_;
             viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             viewInfo.subresourceRange.baseMipLevel = 0;
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(device_.device(), &viewInfo, nullptr, &swapChainImageViews[i]) !=
+            if (vkCreateImageView(device_.device(), &viewInfo, nullptr, &swap_chain_image_views_[i]) !=
                 VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create texture image view!");
@@ -239,10 +238,10 @@ namespace z_engine
         }
     }
 
-    void ZSwapChain::createRenderPass()
+    void ZSwapChain::CreateRenderPass()
     {
         VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
+        depthAttachment.format = FindDepthFormat();
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -256,7 +255,7 @@ namespace z_engine
         depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription colorAttachment = {};
-        colorAttachment.format = getSwapChainImageFormat();
+        colorAttachment.format = GetSwapChainImageFormat();
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -296,23 +295,23 @@ namespace z_engine
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(device_.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        if (vkCreateRenderPass(device_.device(), &renderPassInfo, nullptr, &render_pass_) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create render pass!");
         }
     }
 
-    void ZSwapChain::createFramebuffers()
+    void ZSwapChain::CreateFramebuffers()
     {
-        swapChainFramebuffers.resize(imageCount());
-        for (size_t i = 0; i < imageCount(); i++)
+        swap_chain_framebuffers_.resize(ImageCount());
+        for (size_t i = 0; i < ImageCount(); i++)
         {
-            std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
+            std::array<VkImageView, 2> attachments = {swap_chain_image_views_[i], depth_image_views_[i]};
 
-            VkExtent2D swapChainExtent = getSwapChainExtent();
+            VkExtent2D swapChainExtent = GetSwapChainExtent();
             VkFramebufferCreateInfo framebufferInfo = {};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.renderPass = render_pass_;
             framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
             framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = swapChainExtent.width;
@@ -323,24 +322,24 @@ namespace z_engine
                 device_.device(),
                 &framebufferInfo,
                 nullptr,
-                &swapChainFramebuffers[i]) != VK_SUCCESS)
+                &swap_chain_framebuffers_[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create framebuffer!");
             }
         }
     }
 
-    void ZSwapChain::createDepthResources()
+    void ZSwapChain::CreateDepthResources()
     {
-        VkFormat depthFormat = findDepthFormat();
-        swapChainDepthFormat = depthFormat;
-        VkExtent2D swapChainExtent = getSwapChainExtent();
+        VkFormat depthFormat = FindDepthFormat();
+        swap_chain_depth_format_ = depthFormat;
+        VkExtent2D swapChainExtent = GetSwapChainExtent();
 
-        depthImages.resize(imageCount());
-        depthImageMemorys.resize(imageCount());
-        depthImageViews.resize(imageCount());
+        depth_images_.resize(ImageCount());
+        depth_image_allocation_.resize(ImageCount());
+        depth_image_views_.resize(ImageCount());
 
-        for (int i = 0; i < depthImages.size(); i++)
+        for (int i = 0; i < depth_images_.size(); i++)
         {
             VkImageCreateInfo imageInfo{};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -358,15 +357,17 @@ namespace z_engine
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = 0;
 
-            device_.CreateImageWithInfo(
-                imageInfo,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                depthImages[i],
-                depthImageMemorys[i]);
+            VmaAllocationCreateInfo alloc_info = {};
+            alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+            
+        if (vmaCreateImage(device_.GetAllocator(), &imageInfo, &alloc_info, &depth_images_[i], &depth_image_allocation_[i], nullptr) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create depth image!");
+        }
 
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = depthImages[i];
+            viewInfo.image = depth_images_[i];
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
             viewInfo.format = depthFormat;
             viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -375,19 +376,19 @@ namespace z_engine
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(device_.device(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+            if (vkCreateImageView(device_.device(), &viewInfo, nullptr, &depth_image_views_[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create texture image view!");
             }
         }
     }
 
-    void ZSwapChain::createSyncObjects()
+    void ZSwapChain::CreateSyncObjects()
     {
-        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        renderFinishedSemaphores.resize(imageCount());
-        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
+        image_available_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+        render_finished_semaphores_.resize(ImageCount());
+        in_flight_fences_.resize(MAX_FRAMES_IN_FLIGHT);
+        images_in_flight_.resize(ImageCount(), VK_NULL_HANDLE);
 
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -398,17 +399,17 @@ namespace z_engine
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(device_.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
+            if (vkCreateSemaphore(device_.device(), &semaphoreInfo, nullptr, &image_available_semaphores_[i]) !=
                 VK_SUCCESS ||
-                vkCreateFence(device_.device(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+                vkCreateFence(device_.device(), &fenceInfo, nullptr, &in_flight_fences_[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
         }
 
-        for (size_t i = 0; i < imageCount(); i++)
+        for (size_t i = 0; i < ImageCount(); i++)
         {
-            if (vkCreateSemaphore(device_.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=
+            if (vkCreateSemaphore(device_.device(), &semaphoreInfo, nullptr, &render_finished_semaphores_[i]) !=
                 VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
@@ -416,10 +417,10 @@ namespace z_engine
         }
     }
 
-    VkSurfaceFormatKHR ZSwapChain::chooseSwapSurfaceFormat(
-        const std::vector<VkSurfaceFormatKHR>& availableFormats)
+    VkSurfaceFormatKHR ZSwapChain::ChooseSwapSurfaceFormat(
+        const std::vector<VkSurfaceFormatKHR>& available_formats)
     {
-        for (const auto& availableFormat : availableFormats)
+        for (const auto& availableFormat : available_formats)
         {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -428,13 +429,13 @@ namespace z_engine
             }
         }
 
-        return availableFormats[0];
+        return available_formats[0];
     }
 
-    VkPresentModeKHR ZSwapChain::chooseSwapPresentMode(
-        const std::vector<VkPresentModeKHR>& availablePresentModes)
+    VkPresentModeKHR ZSwapChain::ChooseSwapPresentMode(
+        const std::vector<VkPresentModeKHR>& available_present_modes)
     {
-        for (const auto& availablePresentMode : availablePresentModes)
+        for (const auto& availablePresentMode : available_present_modes)
         {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
             {
@@ -454,13 +455,13 @@ namespace z_engine
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    VkExtent2D ZSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+    VkExtent2D ZSwapChain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         {
             return capabilities.currentExtent;
         }
-        VkExtent2D actualExtent = windowExtent;
+        VkExtent2D actualExtent = window_extent_;
         actualExtent.width = std::max(
             capabilities.minImageExtent.width,
             std::min(capabilities.maxImageExtent.width, actualExtent.width));
@@ -471,7 +472,7 @@ namespace z_engine
         return actualExtent;
     }
 
-    VkFormat ZSwapChain::findDepthFormat()
+    VkFormat ZSwapChain::FindDepthFormat()
     {
         return device_.FindSupportedFormat(
             {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},

@@ -13,19 +13,20 @@ namespace z_engine
         PipelineConfigInfo(const PipelineConfigInfo&) = delete;
         PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
 
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-        VkPipelineViewportStateCreateInfo viewportInfo;
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
-        VkPipelineRasterizationStateCreateInfo rasterizationInfo;
-        VkPipelineMultisampleStateCreateInfo multisampleInfo;
-        VkPipelineColorBlendAttachmentState colorBlendAttachment;
-        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
-        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-        std::vector<VkDynamicState> dynamicStateEnables;
-        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
-        VkPipelineLayout pipelineLayout = nullptr;
-        VkRenderPass renderPass = nullptr;
+        std::vector<VkVertexInputBindingDescription> binding_descriptions{};
+        std::vector<VkVertexInputAttributeDescription> attribute_descriptions{};
+        VkPipelineViewportStateCreateInfo viewport_info;
+        VkPipelineInputAssemblyStateCreateInfo input_assembly_info;
+        VkPipelineRasterizationStateCreateInfo rasterization_info;
+        VkPipelineMultisampleStateCreateInfo multisample_info;
+        VkPipelineColorBlendAttachmentState color_blend_attachment;
+        VkPipelineColorBlendStateCreateInfo color_blend_info;
+        VkPipelineDepthStencilStateCreateInfo depth_stencil_info;
+        std::vector<VkDynamicState> dynamic_state_enables;
+        VkPipelineDynamicStateCreateInfo dynamic_state_info;
+        VkPipelineLayout pipeline_layout = nullptr;
+        VkFormat color_attachement_format = VK_FORMAT_UNDEFINED;
+        VkFormat depth_attachement_format = VK_FORMAT_UNDEFINED;
         uint32_t subpass = 0;
     };
 

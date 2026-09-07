@@ -12,30 +12,30 @@ namespace z_engine
         ZTexture(const ZTexture&) = delete;
         ZTexture& operator=(const ZTexture&) = delete;
 
-        VkImageView getImageView() const { return view; };
-        VkSampler getSampler() const { return sampler; };
-        VkImageLayout getImageLayout() const { return imageLayout; };
+        VkImageView GetImageView() const { return view_; };
+        VkSampler GetSampler() const { return sampler_; };
+        VkImageLayout GetImageLayout() const { return image_layout_; };
 
-        VkDescriptorImageInfo descriptorInfo() const
+        VkDescriptorImageInfo DescriptorInfo() const
         {
-            return VkDescriptorImageInfo{sampler, view, imageLayout};
+            return VkDescriptorImageInfo{sampler_, view_, image_layout_};
         }
 
     private:
-        void createTextureImage(const std::string& filepath);
-        void createTextureImageView();
-        void createTextureSampler();
-        void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
+        void CreateTextureImage(const std::string& filepath);
+        void CreateTextureImageView();
+        void CreateTextureSampler();
+        void TransitionImageLayout(VkImageLayout old_layout, VkImageLayout new_layout);
 
-        ZDevice& device;
+        ZDevice& device_;
 
-        VkImage image;
-        VkDeviceMemory memory;
-        VkImageView view;
-        VkSampler sampler;
-        VkFormat imageFormat;
-        VkImageLayout imageLayout;
+        VkImage image_;
+        VmaAllocation allocation_;
+        VkImageView view_;
+        VkSampler sampler_;
+        VkFormat image_format_;
+        VkImageLayout image_layout_;
 
-        int width, height, mipLevels = 1;
+        int width_, height_, mip_levels_ = 1;
     };
 }

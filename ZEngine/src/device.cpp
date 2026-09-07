@@ -94,7 +94,7 @@ namespace z_engine
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
 
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -177,10 +177,15 @@ namespace z_engine
 
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
+        
+        VkPhysicalDeviceVulkan13Features features13{};
+        features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        features13.dynamicRendering = VK_TRUE;
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
+        createInfo.pNext = &features13;
+        
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
@@ -202,7 +207,7 @@ namespace z_engine
         allocator_info.physicalDevice = physical_device_;
         allocator_info.device = device_;
         allocator_info.instance = instance_;
-        allocator_info.vulkanApiVersion = VK_API_VERSION_1_0;
+        allocator_info.vulkanApiVersion = VK_API_VERSION_1_3;
         
         if (vmaCreateAllocator(&allocator_info, &allocator_) != VK_SUCCESS)
         {
@@ -576,35 +581,5 @@ namespace z_engine
             1,
             &region);
         EndSingleTimeCommands(commandBuffer);
-    }
-
-    void ZDevice::CreateImageWithInfo(
-        const VkImageCreateInfo& image_info,
-        VkMemoryPropertyFlags properties,
-        VkImage& image,
-        VkDeviceMemory& image_memory)
-    {
-        if (vkCreateImage(device_, &image_info, nullptr, &image) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create image!");
-        }
-
-        VkMemoryRequirements memRequirements;
-        vkGetImageMemoryRequirements(device_, image, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
-
-        if (vkAllocateMemory(device_, &allocInfo, nullptr, &image_memory) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to allocate image memory!");
-        }
-
-        if (vkBindImageMemory(device_, image, image_memory, 0) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to bind image memory!");
-        }
     }
 }

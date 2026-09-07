@@ -26,7 +26,7 @@ namespace z_engine
     class ZRenderSystem
     {
     public:
-        ZRenderSystem(ZDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
+        ZRenderSystem(ZDevice& device, VkFormat color_format, VkFormat depth_format, VkDescriptorSetLayout globalSetLayout,
                       VkDescriptorSetLayout textureSetLayout);
         ~ZRenderSystem();
 
@@ -36,15 +36,15 @@ namespace z_engine
         void render(FrameInfo& frameinfo, VkDescriptorSet textureDescriptorSet);
 
     private:
-        const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/shader.vert.spv";
-        const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/shader.frag.spv";
+        const std::string vertexshaderpath_ = "C:/_dev/ZEngine/shaders/shader.vert.spv";
+        const std::string fragshaderpath_ = "C:/_dev/ZEngine/shaders/shader.frag.spv";
 
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void CreatePipelineLayout(VkDescriptorSetLayout global_set_layout, VkDescriptorSetLayout texture_set_layout);
+        void CreatePipeline(VkFormat color_format, VkFormat depth_format);
 
-        ZDevice& Device;
+        ZDevice& device_;
 
-        std::unique_ptr<ZPipeline> pipeline;
-        VkPipelineLayout pipelineLayout;
+        std::unique_ptr<ZPipeline> pipeline_;
+        VkPipelineLayout pipeline_layout_;
     };
 }

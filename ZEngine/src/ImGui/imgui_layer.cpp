@@ -6,7 +6,7 @@
 
 namespace z_engine
 {
-    ZImguiLayer::ZImguiLayer(ZDevice& device, VkRenderPass renderpass, GLFWwindow* window) : _device(device)
+    ZImguiLayer::ZImguiLayer(ZDevice& device, VkFormat color_format, VkFormat depth_format, GLFWwindow* window) : _device(device)
     {
         createDescriptorPool();
 
@@ -15,11 +15,16 @@ namespace z_engine
 
         ImGui_ImplGlfw_InitForVulkan(window, true);
 
+        VkPipelineRenderingCreateInfo pipeline_rendering_info {};
+        pipeline_rendering_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        pipeline_rendering_info.colorAttachmentCount = 1;
+        pipeline_rendering_info.pColorAttachmentFormats = &color_format;
+        pipeline_rendering_info.depthAttachmentFormat = depth_format;
+
         ImGui_ImplVulkan_PipelineInfo pipelineInfo{};
         pipelineInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        pipelineInfo.RenderPass = renderpass;
-        pipelineInfo.Subpass = 0;
-
+        pipelineInfo.PipelineRenderingCreateInfo = pipeline_rendering_info; 
+        
         ImGui_ImplVulkan_InitInfo initInfo = {};
         initInfo.Instance = device.instance();
         initInfo.PhysicalDevice = device.PhysicalDevice();
@@ -30,7 +35,7 @@ namespace z_engine
         initInfo.DescriptorPoolSize = 64;
         initInfo.MinImageCount = 3;
         initInfo.ImageCount = 3;
-        initInfo.UseDynamicRendering = false;
+        initInfo.UseDynamicRendering = true;
         initInfo.PipelineInfoMain = pipelineInfo;
 
         ImGui_ImplVulkan_Init(&initInfo);

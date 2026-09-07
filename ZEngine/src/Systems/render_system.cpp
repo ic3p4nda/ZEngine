@@ -8,27 +8,27 @@
 
 namespace z_engine
 {
-    ZRenderSystem::ZRenderSystem(class ZDevice& device, VkRenderPass renderpass, VkDescriptorSetLayout globalSetLayout,
-                                 VkDescriptorSetLayout textureSetLayout) : Device(device)
+    ZRenderSystem::ZRenderSystem(class ZDevice& device, VkFormat color_format, VkFormat depth_format, VkDescriptorSetLayout globalSetLayout,
+                                 VkDescriptorSetLayout textureSetLayout) : device_(device)
     {
-        createPipelineLayout(globalSetLayout, textureSetLayout);
-        createPipeline(renderpass);
+        CreatePipelineLayout(globalSetLayout, textureSetLayout);
+        CreatePipeline(color_format, depth_format);
     }
 
     ZRenderSystem::~ZRenderSystem()
     {
-        vkDestroyPipelineLayout(Device.device(), pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(device_.device(), pipeline_layout_, nullptr);
     }
 
-    void ZRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
-                                             VkDescriptorSetLayout textureSetLayout)
+    void ZRenderSystem::CreatePipelineLayout(VkDescriptorSetLayout global_set_layout,
+                                             VkDescriptorSetLayout texture_set_layout)
     {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, textureSetLayout};
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{global_set_layout, texture_set_layout};
 
         VkPipelineLayoutCreateInfo layoutCreateInfo{};
         layoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -37,32 +37,33 @@ namespace z_engine
         layoutCreateInfo.pushConstantRangeCount = 1;
         layoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-        if (vkCreatePipelineLayout(Device.device(), &layoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        if (vkCreatePipelineLayout(device_.device(), &layoutCreateInfo, nullptr, &pipeline_layout_) != VK_SUCCESS)
             throw std::runtime_error("failed to create pipeline layout!");
     }
 
-    void ZRenderSystem::createPipeline(VkRenderPass renderpass)
+    void ZRenderSystem::CreatePipeline(VkFormat color_format, VkFormat depth_format)
     {
-        assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+        assert(pipeline_layout_ != nullptr && "Cannot create pipeline before pipeline layout");
 
         PipelineConfigInfo pipelineConfig{};
         ZPipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderpass;
-        pipelineConfig.pipelineLayout = pipelineLayout;
-        pipeline = std::make_unique<ZPipeline>(Device,
+        pipelineConfig.color_attachement_format = color_format;
+        pipelineConfig.depth_attachement_format = depth_format;
+        pipelineConfig.pipeline_layout = pipeline_layout_;
+        pipeline_ = std::make_unique<ZPipeline>(device_,
                                                pipelineConfig,
-                                               VERTEXSHADERPATH,
-                                               FRAGSHADERPATH);
+                                               vertexshaderpath_,
+                                               fragshaderpath_);
     }
 
     void ZRenderSystem::render(FrameInfo& frameinfo, VkDescriptorSet textureDescriptorSet)
     {
-        pipeline->bind(frameinfo.commandBuffer);
+        pipeline_->bind(frameinfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
             frameinfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
+            pipeline_layout_,
             0, 1,
             &frameinfo.globalDescriptorSet,
             0, nullptr
@@ -71,7 +72,7 @@ namespace z_engine
         vkCmdBindDescriptorSets(
             frameinfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
+            pipeline_layout_,
             1, 1,
             &textureDescriptorSet,
             0, nullptr
@@ -86,7 +87,7 @@ namespace z_engine
             push.normalMatrix = object.transform.normalMatrix();
 
             vkCmdPushConstants(frameinfo.commandBuffer,
-                               pipelineLayout,
+                               pipeline_layout_,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0,
                                sizeof(SimplePushConstantData),

@@ -40,7 +40,7 @@ namespace z_engine
         ZWindow window_{width_, height_, "HelloWorld"};
         ZDevice device_{window_};
         ZRenderer renderer_{window_, device_};
-        ZImguiLayer imgui_layer_{device_, renderer_.getSwapchainRenderPass(), window_.getGLFWwindow()};
+        ZImguiLayer imgui_layer_{device_, renderer_.GetImageFormat(), renderer_.GetDepthFormat(), window_.getGLFWwindow()};
 
         std::unique_ptr<ZDescriptorPool> global_pool_{};
         ZGameObject::MAP game_objects_;
