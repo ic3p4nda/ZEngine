@@ -8,8 +8,6 @@ namespace z_engine
 {
     ZImguiLayer::ZImguiLayer(ZDevice& device, VkFormat color_format, VkFormat depth_format, GLFWwindow* window) : _device(device)
     {
-        createDescriptorPool();
-
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
@@ -47,7 +45,6 @@ namespace z_engine
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
-        vkDestroyDescriptorPool(_device.device(), _imguiPool, nullptr);
     }
 
     void ZImguiLayer::newFrame()
@@ -61,23 +58,5 @@ namespace z_engine
     {
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-    }
-
-    void ZImguiLayer::createDescriptorPool()
-    {
-        VkDescriptorPoolSize poolSizes[]
-            {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
-
-        VkDescriptorPoolCreateInfo poolinfo{};
-        poolinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolinfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        poolinfo.maxSets = 1;
-        poolinfo.poolSizeCount = 1;
-        poolinfo.pPoolSizes = poolSizes;
-
-        if (vkCreateDescriptorPool(_device.device(), &poolinfo, nullptr, &_imguiPool))
-        {
-            throw std::runtime_error("failed to create descriptor pool!");
-        }
     }
 }

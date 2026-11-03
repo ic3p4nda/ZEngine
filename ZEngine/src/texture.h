@@ -12,9 +12,12 @@ namespace z_engine
         ZTexture(const ZTexture&) = delete;
         ZTexture& operator=(const ZTexture&) = delete;
 
+        ZTexture GetDefaultTexture() {CreateTextureImage("models/Default.jpg");}
+
         VkImageView GetImageView() const { return view_; };
         VkSampler GetSampler() const { return sampler_; };
         VkImageLayout GetImageLayout() const { return image_layout_; };
+
 
         VkDescriptorImageInfo DescriptorInfo() const
         {

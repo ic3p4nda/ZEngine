@@ -56,7 +56,7 @@ namespace z_engine
                                                fragshaderpath_);
     }
 
-    void ZRenderSystem::render(FrameInfo& frameinfo, VkDescriptorSet textureDescriptorSet)
+    void ZRenderSystem::render(FrameInfo& frameinfo, VkDescriptorSet defaultTextureSet)
     {
         pipeline_->bind(frameinfo.commandBuffer);
 
@@ -69,15 +69,6 @@ namespace z_engine
             0, nullptr
         );
 
-        vkCmdBindDescriptorSets(
-            frameinfo.commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline_layout_,
-            1, 1,
-            &textureDescriptorSet,
-            0, nullptr
-        );
-
         for (auto& kv : frameinfo.gameObjects)
         {
             auto& object = kv.second;
@@ -85,6 +76,16 @@ namespace z_engine
             SimplePushConstantData push{};
             push.modelMatrix = object.transform.mat4();
             push.normalMatrix = object.transform.normalMatrix();
+
+            VkDescriptorSet texSet = object.getTextureDescriptorSet() != VK_NULL_HANDLE
+            ? object.getTextureDescriptorSet()
+            : defaultTextureSet;
+
+            vkCmdBindDescriptorSets(
+                frameinfo.commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipeline_layout_,
+                1, 1, &texSet, 0, nullptr);
 
             vkCmdPushConstants(frameinfo.commandBuffer,
                                pipeline_layout_,

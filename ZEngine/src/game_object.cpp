@@ -77,7 +77,8 @@ namespace z_engine
     ZGameObject ZGameObject::createGameObject()
     {
         static id_t currentId = 0;
-        return ZGameObject{currentId++};
+        ZGameObject obj = ZGameObject{currentId++};
+        return obj;
     }
 
     ZGameObject ZGameObject::makePointLight(float lightIntensity, float radius, glm::vec3 color)
