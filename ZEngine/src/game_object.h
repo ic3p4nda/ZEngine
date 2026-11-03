@@ -42,6 +42,9 @@ namespace z_engine
         ZGameObject(ZGameObject&&) = default;
         ZGameObject& operator=(ZGameObject&&) = default;
 
+        VkDescriptorSet getTextureDescriptorSet() const { return textureDescriptorSet_; }
+        void setTextureDescriptorSet(VkDescriptorSet descriptorSet) { textureDescriptorSet_ = descriptorSet; }
+
         id_t getId() { return id; }
 
         glm::vec3 color{};
@@ -53,9 +56,9 @@ namespace z_engine
         std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
     private:
-        ZGameObject(id_t objId) : id(objId)
-        {
-        };
+        ZGameObject(id_t objId) : id(objId) {};
+
+        VkDescriptorSet textureDescriptorSet_ = VK_NULL_HANDLE;
 
         id_t id;
     };

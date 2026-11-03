@@ -18,9 +18,6 @@ namespace z_engine
         void render(VkCommandBuffer commandBuffer);
 
     private:
-        void createDescriptorPool();
-
         ZDevice& _device;
-        VkDescriptorPool _imguiPool;
     };
 }

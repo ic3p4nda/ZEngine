@@ -5,10 +5,10 @@
 
 namespace z_engine
 {
-    class ZKeyboardMovementController
+    class ZInputController
     {
     public:
-        ZKeyboardMovementController(GLFWwindow* window);
+        ZInputController(GLFWwindow* window);
 
         struct KeyMappings
         {

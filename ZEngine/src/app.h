@@ -42,6 +42,13 @@ namespace z_engine
         ZRenderer renderer_{window_, device_};
         ZImguiLayer imgui_layer_{device_, renderer_.GetImageFormat(), renderer_.GetDepthFormat(), window_.getGLFWwindow()};
 
+        std::unique_ptr<ZDescriptorSetLayout> texture_set_layout_;
+        std::unordered_map<std::string, std::shared_ptr<ZTexture>> textures_;
+        std::unordered_map<std::string, VkDescriptorSet> texture_sets_;
+        VkDescriptorSet default_texture_set_ = VK_NULL_HANDLE;
+
+        void SetTexture(ZGameObject& obj, const std::string& file);
+
         std::unique_ptr<ZDescriptorPool> global_pool_{};
         ZGameObject::MAP game_objects_;
     };

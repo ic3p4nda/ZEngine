@@ -11,6 +11,11 @@ namespace z_engine
 {
     ZTexture::ZTexture(ZDevice& device, const std::string& filepath) : device_(device)
     {
+        auto path = filepath;
+        if (path == "deaf") {
+            path = "models/Default.jpg";
+        }
+
         CreateTextureImage(filepath);
         CreateTextureImageView();
         CreateTextureSampler();
@@ -60,7 +65,7 @@ namespace z_engine
 
         if (vmaCreateImage(device_.GetAllocator(), &imageInfo, &alloc_info, &image_, &allocation_, nullptr) != VK_SUCCESS)
         {
-            std::runtime_error("failed to create texture image!");
+            throw std::runtime_error("failed to create texture image!");
         }
         
         TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

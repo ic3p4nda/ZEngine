@@ -54,18 +54,10 @@ namespace z_engine
         VmaAllocator GetAllocator() { return allocator_; }
 
         SwapChainSupportDetails GetSwapChainSupport() { return QuerySwapChainSupport(physical_device_); }
-        uint32_t FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
         QueueFamilyIndices FindPhysicalQueueFamilies() { return FindQueueFamilies(physical_device_); }
         VkFormat FindSupportedFormat(
             const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
-        // Buffer Helper Functions
-        void CreateBuffer(
-            VkDeviceSize size,
-            VkBufferUsageFlags usage,
-            VkMemoryPropertyFlags properties,
-            VkBuffer& buffer,
-            VkDeviceMemory& buffer_memory);
         VkCommandBuffer BeginSingleTimeCommands();
         void EndSingleTimeCommands(VkCommandBuffer command_buffer);
         void CopyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);

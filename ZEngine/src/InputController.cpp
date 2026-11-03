@@ -1,11 +1,11 @@
-﻿#include "keyboard_movement_controller.h"
+﻿#include "InputController.h"
 
 #include <imgui.h>
 #include <iostream>
 
 namespace z_engine
 {
-    ZKeyboardMovementController::ZKeyboardMovementController(GLFWwindow* window)
+    ZInputController::ZInputController(GLFWwindow* window)
     {
         // if (glfwRawMouseMotionSupported())
         // {
@@ -14,7 +14,7 @@ namespace z_engine
         // }
     }
 
-    void ZKeyboardMovementController::moveInPlaneXZ(ZWindow& window, float deltaTime, ZGameObject& gameObject)
+    void ZInputController::moveInPlaneXZ(ZWindow& window, float deltaTime, ZGameObject& gameObject)
     {
         GLFWwindow* glfwWindow = window.getGLFWwindow();
         double xpos, ypos;

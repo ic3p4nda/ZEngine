@@ -31,8 +31,8 @@ namespace z_engine
         void render(FrameInfo& frameinfo);
 
     private:
-        const std::string VERTEXSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.vert.spv";
-        const std::string FRAGSHADERPATH = "C:/_dev/ZEngine/shaders/point_light.frag.spv";
+        const std::string VERTEXSHADERPATH = "shaders/point_light.vert.spv";
+        const std::string FRAGSHADERPATH = "shaders/point_light.frag.spv";
 
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkFormat color_format, VkFormat depth_format);

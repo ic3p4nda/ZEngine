@@ -24,8 +24,6 @@ namespace z_engine
         ZSwapChain(const ZSwapChain&) = delete;
         ZSwapChain& operator=(const ZSwapChain&) = delete;
 
-        VkFramebuffer GetFrameBuffer(int index) { return swap_chain_framebuffers_[index]; }
-        VkRenderPass GetRenderPass() { return render_pass_; }
         VkImage GetDepthImage(int index) { return depth_images_[index]; }
         VkImageView GetDepthImageView(int index) { return depth_image_views_[index]; }
         VkImage GetSwapChainImage(int index) { return swap_chain_images_[index]; }
@@ -57,8 +55,6 @@ namespace z_engine
         void CreateSwapChain();
         void CreateImageViews();
         void CreateDepthResources();
-        void CreateRenderPass();
-        void CreateFramebuffers();
         void CreateSyncObjects();
 
         // Helper functions
@@ -71,9 +67,6 @@ namespace z_engine
         VkFormat swap_chain_image_format_;
         VkFormat swap_chain_depth_format_;
         VkExtent2D swap_chain_extent_;
-
-        std::vector<VkFramebuffer> swap_chain_framebuffers_;
-        VkRenderPass render_pass_;
 
         std::vector<VkImage> depth_images_;
         std::vector<VmaAllocation> depth_image_allocation_;

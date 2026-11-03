@@ -1,7 +1,7 @@
 ﻿#include "app.h"
 
 #include "camera.h"
-#include "keyboard_movement_controller.h"
+#include "InputController.h"
 #include "buffer.h"
 #include "Systems/render_system.h"
 #include "Systems/point_light_system.h"
@@ -18,10 +18,14 @@ namespace z_engine
     ZApp::ZApp()
     {
         global_pool_ = ZDescriptorPool::Builder(device_)
-                     .SetMaxSets(ZSwapChain::MAX_FRAMES_IN_FLIGHT + 1)
+                     .SetMaxSets(1000)
                      .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ZSwapChain::MAX_FRAMES_IN_FLIGHT)
-                     .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+                     .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
                      .build();
+
+        texture_set_layout_ = ZDescriptorSetLayout::Builder(device_)
+                                .AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                                .build();
 
         LoadGameObjects();
     }
@@ -49,18 +53,6 @@ namespace z_engine
                                .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                                .build();
 
-        auto texture_set_layout = ZDescriptorSetLayout::Builder(device_)
-                                .AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                                .build();
-
-        auto brick_texture = std::make_shared<ZTexture>(device_, "C:/_dev/ZEngine/models/brick.jpg");
-
-        VkDescriptorSet floor_texture_descriptor_set;
-        auto image_info = brick_texture->DescriptorInfo();
-        ZDescriptorWriter(*texture_set_layout, *global_pool_)
-            .WriteImage(0, &image_info)
-            .build(floor_texture_descriptor_set);
-
         std::vector<VkDescriptorSet> global_descriptor_sets(ZSwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < global_descriptor_sets.size(); i++)
         {
@@ -77,7 +69,7 @@ namespace z_engine
             renderer_.GetImageFormat(),
             renderer_.GetDepthFormat(),
             global_set_layout->GetDescriptorSetLayout(),
-            texture_set_layout->GetDescriptorSetLayout()
+            texture_set_layout_->GetDescriptorSetLayout()
         };
         ZPointLightSystem point_light_system{
             device_,
@@ -90,7 +82,7 @@ namespace z_engine
 
         auto viewer_object = ZGameObject::createGameObject();
         viewer_object.transform.translation.z = -2.5f;
-        ZKeyboardMovementController camera_controller{window_.getGLFWwindow()};
+        ZInputController input_controller{window_.getGLFWwindow()};
 
         auto current_time = std::chrono::high_resolution_clock::now();
 
@@ -107,7 +99,7 @@ namespace z_engine
 
             frame_time = std::min(frame_time, MAX_FRAME_TIME);
 
-            camera_controller.moveInPlaneXZ(window_, frame_time, viewer_object);
+            input_controller.moveInPlaneXZ(window_, frame_time, viewer_object);
             camera.SetViewYxz(viewer_object.transform.translation, viewer_object.transform.rotation);
             float aspect = renderer_.GetAspectRatio();
 
@@ -135,7 +127,7 @@ namespace z_engine
 
                 //Render
                 renderer_.BeginSwapchainRenderPass(command_buffer);
-                simple_render_system.render(frame_info, floor_texture_descriptor_set);
+                simple_render_system.render(frame_info, default_texture_set_);
                 point_light_system.render(frame_info);
 
                 fps_timer += frame_time;
@@ -150,7 +142,7 @@ namespace z_engine
                 ImGui::Begin("Stats");
                 ImGui::Text("FPS = %f", fps);
                 ImGui::Text("FrameTime = %f", frame_time);
-                ImGui::DragFloat("Sens", &camera_controller.mouseSensitivity, 0.01f);
+                ImGui::DragFloat("Sens", &input_controller.mouseSensitivity, 0.01f);
                 ImGui::End();
                 imgui_layer_.render(command_buffer);
 
@@ -165,25 +157,28 @@ namespace z_engine
     void ZApp::LoadGameObjects()
     {
         std::shared_ptr<ZModel> lve_model =
-            ZModel::createModelFromFile(device_, "C:/_dev/ZEngine/models/FinalBaseMesh.obj");
+            ZModel::createModelFromFile(device_, "models/FinalBaseMesh.obj");
         auto flat_vase = ZGameObject::createGameObject();
         flat_vase.model = lve_model;
         flat_vase.transform.translation = {-.5f, .5f, 0.f};
         flat_vase.transform.scale = glm::vec3(-0.06f);
+        SetTexture(flat_vase, "models/Default.jpg");
         game_objects_.emplace(flat_vase.getId(), std::move(flat_vase));
 
-        lve_model = ZModel::createModelFromFile(device_, "C:/_dev/ZEngine/models/smooth_vase.obj");
+        lve_model = ZModel::createModelFromFile(device_, "models/smooth_vase.obj");
         auto smooth_vase = ZGameObject::createGameObject();
         smooth_vase.model = lve_model;
         smooth_vase.transform.translation = {.5f, .5f, 0.f};
         smooth_vase.transform.scale = glm::vec3(2.5f);
+        SetTexture(smooth_vase, "models/Default.jpg");
         game_objects_.emplace(smooth_vase.getId(), std::move(smooth_vase));
 
-        lve_model = ZModel::createModelFromFile(device_, "C:/_dev/ZEngine/models/quad.obj");
+        lve_model = ZModel::createModelFromFile(device_, "models/quad.obj");
         auto floor = ZGameObject::createGameObject();
         floor.model = lve_model;
         floor.transform.translation = {0.0f, .5f, 0.f};
         floor.transform.scale = glm::vec3(3.0f);
+        SetTexture(floor, "models/brick.jpg");
         game_objects_.emplace(floor.getId(), std::move(floor));
 
         std::vector<glm::vec3> light_colors{
@@ -205,5 +200,22 @@ namespace z_engine
             point_light.transform.translation = glm::vec3(rotate_light * glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f));
             game_objects_.emplace(point_light.getId(), std::move(point_light));
         }
+    }
+
+    void ZApp::SetTexture(ZGameObject &obj, const std::string &file) {
+        auto& tex = textures_[file];
+        if (!tex) tex = std::make_shared<ZTexture>(device_, file);
+
+        auto& set = texture_sets_[file];
+        if (set == VK_NULL_HANDLE)
+        {
+            auto info = tex->DescriptorInfo();
+            ZDescriptorWriter(*texture_set_layout_, *global_pool_)
+                .WriteImage(0, &info)
+                .build(set);
+        }
+
+        obj.texture = tex;
+        obj.setTextureDescriptorSet(set);
     }
 }

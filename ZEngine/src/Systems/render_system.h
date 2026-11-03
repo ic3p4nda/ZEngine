@@ -33,11 +33,11 @@ namespace z_engine
         ZRenderSystem(const ZRenderSystem&) = delete;
         ZRenderSystem& operator=(const ZRenderSystem&) = delete;
 
-        void render(FrameInfo& frameinfo, VkDescriptorSet textureDescriptorSet);
+        void render(FrameInfo& frameinfo, VkDescriptorSet defaultTextureSet);
 
     private:
-        const std::string vertexshaderpath_ = "C:/_dev/ZEngine/shaders/shader.vert.spv";
-        const std::string fragshaderpath_ = "C:/_dev/ZEngine/shaders/shader.frag.spv";
+        const std::string vertexshaderpath_ = "shaders/shader.vert.spv";
+        const std::string fragshaderpath_ = "shaders/shader.frag.spv";
 
         void CreatePipelineLayout(VkDescriptorSetLayout global_set_layout, VkDescriptorSetLayout texture_set_layout);
         void CreatePipeline(VkFormat color_format, VkFormat depth_format);
